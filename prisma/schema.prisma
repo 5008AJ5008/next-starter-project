@@ -1,11 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
+  // Переконайтеся, що цей шлях правильний для вашої структури проекту
   output   = "../lib/generated/prisma"
 }
 
@@ -15,46 +10,57 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
-// Tabellenname PascalCase und Singular
-model Signature {
-  // ID, wenn man eine automatisch hochgezählte Integer-Zahl möchte.
-  // Achtung, Gefahr, dass jemand einfach IDs ausprobiert.
-  // Siehe auch https://www.youtube.com/watch?v=cEWlm-iXeF8
-  //  id Int @id @default(autoincrement())
-  id       String   @id @default(uuid()) // Kryptische Strings ohne Reihenfolge als ID
-  name     String? // Optionale Spalte
-  email    String   @unique // Einzigartiger Wert, Adresse darf nicht zweimal vorkommen
-  approved Boolean  @default(false)
-  date     DateTime @default(now()) // Zeitpunk der Erstellung des Eintrags
+// Моделі для автентифікації через NextAuth.js з PrismaAdapter
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
 }
 
-model Event {
-  id          Int        @id @default(autoincrement())
-  name        String
-  description String?
-  date        DateTime
-  poster      Poster? // 1:1 Relation, muss hier (wo nicht @relation verwendet wird) optional sein
-  // 1:n Relation, Event kann nur eine Venue haben
-  venue       Venue      @relation(fields: [venueId], references: [id])
-  venueId     Int
-  category    Category[]
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model Poster {
-  id      Int    @id @default(autoincrement())
-  url     String
-  event   Event  @relation(fields: [eventId], references: [id]) // Angabe dient nur Prisma
-  eventId Int    @unique // Feld taucht in der Datenbank auf
+// Оновлена модель користувача для Badoo-прототипу
+model User {
+  id            String    @id @default(cuid())
+  name          String? // Ім'я (з Google або введене користувачем)
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String? // URL основного фото профілю
+
+  // --- Оновлені та нові поля для профілю ---
+  birthDate DateTime? // Дата народження (для розрахунку віку)
+  gender    String? // Стать (можна зробити Enum пізніше)
+  aboutMe   String?   @db.Text // Коротко про себе (замість bio)
+  city      String? // Місто проживання
+
+  // Зв'язки для NextAuth
+  accounts Account[]
+  sessions Session[]
 }
 
-model Venue {
-  id    Int     @id @default(autoincrement())
-  name  String
-  Event Event[] // 1:n Relation, Venue kann viele Events haben
-}
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-model Category {
-  id    Int     @id @default(autoincrement())
-  name  String
-  event Event[]
+  @@unique([identifier, token])
 }

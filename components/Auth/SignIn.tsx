@@ -1,18 +1,14 @@
-//import { signIn } from '@/auth';
-//import { FaGithub } from 'react-icons/fa';
+import { signIn } from '@/auth';
 
 export default function SignIn() {
-  return null;
-  /*   return (
-    <form
-      action={async () => {
-        'use server';
-        await signIn();
-      }}
-    >
-      <button type="submit">
-        Anmelden mit GitHub <FaGithub />
-      </button>
-    </form>
-  ); */
+	return (
+		<form
+			action={async () => {
+				'use server';
+				await signIn('google');
+			}}
+		>
+			<button type="submit">Signin with Google</button>
+		</form>
+	);
 }

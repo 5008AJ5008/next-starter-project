@@ -1,19 +1,32 @@
-import type { GitHubUser } from '@/types/auth-types';
+// User.tsx
+import type { AuthUserProfile } from '@/types/auth-types'; // Імпортуємо правильний тип
 import Image from 'next/image';
 
-type Props = GitHubUser;
+// Використовуємо правильний тип для Props
+type Props = AuthUserProfile;
+
 export default function User({ name, image }: Props) {
-  return (
-    <div>
-      Angemeldet als {name}
-      {image && (
-        <Image
-          src={image}
-          width={64}
-          height={64}
-          alt={`GitHub-Avatar von ${name}`}
-        />
-      )}
-    </div>
-  );
+	// Обробляємо можливі null значення
+	const displayName = name ?? 'Unbekannter Benutzer'; // Якщо name = null/undefined
+	const altText = name ? `Avatar von ${name}` : 'Benutzer-Avatar'; // Безпечний alt
+
+	return (
+		<div>
+			Angemeldet als {displayName}
+			{/* Перевірка наявності image перед рендерингом */}
+			{image && (
+				<Image
+					src={image}
+					width={32}
+					height={32}
+					alt={altText}
+					style={{
+						borderRadius: '50%',
+						marginLeft: '10px',
+						verticalAlign: 'middle',
+					}}
+				/>
+			)}
+		</div>
+	);
 }

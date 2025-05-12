@@ -1,14 +1,8 @@
-export type GitHubUser = {
-  name: string;
-  email: string;
-  image: string;
+// auth-types.ts
+export type AuthUserProfile = {
+	name?: string | null; // Дозволяємо null або undefined
+	email?: string | null; // Дозволяємо null або undefined (навіть якщо поки не використовуєте)
+	image?: string | null; // Дозволяємо null або undefined
+	// Можливо, id, якщо ви його додаєте в сесію:
+	// id?: string;
 };
-
-/* declare module 'next-auth' {
-  // Returned by `useSession`, `auth`, contains information about the active session.
-   
-  interface Session {
-    user: GitHubUser;
-  }
-}
- */
