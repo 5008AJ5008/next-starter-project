@@ -1,5 +1,6 @@
 'use client';
 import { useFormState, useFormStatus } from 'react-dom';
+import { updateProfile } from '@/actions/profileActions';
 
 // Тип для даних користувача, які передаються у форму
 type UserProfileData = {
