@@ -13,6 +13,12 @@ const nextConfig = {
 				protocol: 'https',
 				hostname: 'lh3.googleusercontent.com',
 			},
+			// --- ДОДАНО ХОСТ ДЛЯ VERCEL BLOB ---
+			{
+				protocol: 'https',
+				// Замініть це на ваш реальний хостнейм Vercel Blob, якщо він інший
+				hostname: '2tiub218nadtutoj.public.blob.vercel-storage.com',
+			},
 		],
 	},
 	// https://nextjs.org/docs/app/building-your-application/routing/redirecting#redirects-in-nextconfigjs
