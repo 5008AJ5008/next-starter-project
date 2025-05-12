@@ -1,7 +1,6 @@
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { redirect } from 'next/navigation'; // Для перенаправлення неавторизованих
-import { updateProfile } from '@/actions/profileActions'; // Імпорт Server Action
 import { ProfileForm } from '@/components/profile/ProfileForm'; // Компонент форми (створимо нижче або окремо)
 import type { Metadata } from 'next';
 
