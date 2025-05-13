@@ -11,12 +11,13 @@ body {
 .site-header,
 .site-footer {
 	padding: var(--size-fluid-3);
-	background-color: var(--header-footer-background);
+	/* background-color: var(--header-footer-background); */
+	background-color: var(--blue-9);
 }
 
 .site-header {
 	color: var(--heading-color);
-	display: flex;
+	/* display: flex; */
 	align-items: center;
 	position: relative;
 	.site-header__title {
@@ -27,7 +28,10 @@ body {
 		align-items: center;
 	}
 }
-
+.main-navigation {
+	display: flex;
+	justify-content: space-between;
+}
 .site-content {
 	flex: 1;
 }

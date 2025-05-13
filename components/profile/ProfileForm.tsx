@@ -3,21 +3,20 @@
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { updateProfile } from '@/actions/profileActions';
-// 1. Імпортуємо Server Action для завантаження фото
-import { uploadProfilePhoto } from '@/actions/profileActions'; // Або з '@/actions/photoActions'
-// 2. Імпортуємо Image для відображення аватара
+import { uploadProfilePhoto } from '@/actions/profileActions';
 import Image from 'next/image';
-// 3. Імпортуємо хуки для стану файлу та доступу до елемента
-import { useState, useRef } from 'react';
+// Додаємо useEffect
+import { useState, useRef, useEffect } from 'react';
+import type { ChangeEvent } from 'react';
 
-// 4. Додаємо 'image' до типу даних користувача
+// Тип для даних користувача
 type UserProfileData = {
 	name: string | null;
 	birthDate: Date | null;
 	gender: string | null;
 	city: string | null;
 	aboutMe: string | null;
-	image?: string | null; // Додано поле для поточного URL зображення
+	image?: string | null;
 };
 
 // Тип для стану форми оновлення профілю
@@ -26,7 +25,7 @@ type UpdateFormState = {
 	status: 'success' | 'error';
 } | null;
 
-// 5. Додаємо тип для стану форми завантаження фото
+// Тип для стану форми завантаження фото
 type UploadFormState = {
 	message: string;
 	status: 'success' | 'error';
@@ -47,13 +46,13 @@ function SubmitProfileButton() {
 	);
 }
 
-// 6. Додаємо компонент кнопки для форми завантаження фото
-function SubmitPhotoButton() {
+// Компонент кнопки для форми завантаження фото
+function SubmitPhotoButton({ disabled }: { disabled?: boolean }) {
 	const { pending } = useFormStatus();
 	return (
 		<button
 			type="submit"
-			disabled={pending}
+			disabled={pending || disabled}
 			className="ml-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
 		>
 			{pending ? 'Hochladen...' : 'Foto hochladen'}
@@ -63,28 +62,81 @@ function SubmitPhotoButton() {
 
 // Основний компонент форми
 export function ProfileForm({ user }: { user: UserProfileData }) {
-	// Стан для форми оновлення текстових даних
 	const [updateFormState, updateFormAction] = useActionState<
 		UpdateFormState,
 		FormData
 	>(updateProfile, null);
-	// 7. Додаємо стан для форми завантаження фото
 	const [uploadFormState, uploadFormAction] = useActionState<
 		UploadFormState,
 		FormData
 	>(uploadProfilePhoto, null);
 
-	// 8. Додаємо стан для імені файлу та ref для input
-	const [fileName, setFileName] = useState<string | null>(null);
+	const [selectedFile, setSelectedFile] = useState<File | null>(null);
+	const [fileError, setFileError] = useState<string | null>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
-	// 9. Додаємо обробник зміни файлу
-	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+	// Стани для відображення повідомлень з таймером
+	const [displayUpdateMessage, setDisplayUpdateMessage] =
+		useState<UpdateFormState>(null);
+	const [displayUploadMessage, setDisplayUploadMessage] =
+		useState<UploadFormState>(null);
+
+	const MESSAGE_TIMEOUT_MS = 5000; // 5 секунд
+
+	// useEffect для повідомлення про оновлення профілю
+	useEffect(() => {
+		if (updateFormState?.message) {
+			setDisplayUpdateMessage(updateFormState);
+			const timer = setTimeout(() => {
+				setDisplayUpdateMessage(null);
+			}, MESSAGE_TIMEOUT_MS);
+			return () => clearTimeout(timer); // Очищення таймера при розмонтуванні або повторному виклику
+		}
+	}, [updateFormState]); // Залежність від updateFormState
+
+	// useEffect для повідомлення про завантаження фото
+	useEffect(() => {
+		if (uploadFormState?.message) {
+			setDisplayUploadMessage(uploadFormState);
+			const timer = setTimeout(() => {
+				setDisplayUploadMessage(null);
+			}, MESSAGE_TIMEOUT_MS);
+			return () => clearTimeout(timer); // Очищення таймера
+		}
+	}, [uploadFormState]); // Залежність від uploadFormState
+
+	const MAX_FILE_SIZE_MB = 5;
+	const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+	const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
-		setFileName(file ? file.name : null);
+		if (file) {
+			if (file.size > MAX_FILE_SIZE_BYTES) {
+				setFileError(
+					`Datei zu groß (max. ${MAX_FILE_SIZE_MB}MB). Bitte wählen Sie eine kleinere Datei.`
+				);
+				setSelectedFile(null);
+				if (fileInputRef.current) {
+					fileInputRef.current.value = '';
+				}
+			} else if (!file.type.startsWith('image/')) {
+				setFileError(
+					'Nur Bilddateien sind erlaubt. Bitte wählen Sie eine Bilddatei.'
+				);
+				setSelectedFile(null);
+				if (fileInputRef.current) {
+					fileInputRef.current.value = '';
+				}
+			} else {
+				setSelectedFile(file);
+				setFileError(null);
+			}
+		} else {
+			setSelectedFile(null);
+			setFileError(null);
+		}
 	};
 
-	// Функція для форматування дати (залишається без змін)
 	const formatDateForInput = (date: Date | null): string => {
 		if (!date) return '';
 		const year = date.getFullYear();
@@ -93,34 +145,31 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 		return `${year}-${month}-${day}`;
 	};
 
-	// 10. Додаємо логіку для скидання імені файлу після успішного завантаження
-	if (uploadFormState?.status === 'success' && fileName) {
-		setFileName(null);
+	if (uploadFormState?.status === 'success' && selectedFile) {
+		setSelectedFile(null);
+		setFileError(null);
 		if (fileInputRef.current) {
 			fileInputRef.current.value = '';
 		}
 	}
 
 	return (
-		// 11. Обгортаємо обидві форми в один div для кращого структурування
 		<div className="space-y-8">
-			{/* 12. Додаємо нову форму для завантаження фото */}
 			<form
 				action={uploadFormAction}
 				className="space-y-4 p-4 border border-gray-200 rounded-md bg-gray-50"
 			>
 				<h2 className="text-lg font-medium">Profilbild ändern</h2>
 				<div className="flex items-center space-x-4">
-					{/* Відображення поточного/нового фото */}
 					<div className="flex-shrink-0">
-						{user.image || uploadFormState?.imageUrl ? ( // Перевіряємо обидва джерела
+						{user.image || uploadFormState?.imageUrl ? (
 							<Image
-								src={uploadFormState?.imageUrl ?? user.image!} // Використовуємо нове фото якщо є, інакше старе
+								src={uploadFormState?.imageUrl ?? user.image!}
 								alt="Aktuelles Profilbild"
 								width={80}
 								height={80}
 								className="rounded-full object-cover"
-								key={uploadFormState?.imageUrl ?? user.image} // Ключ для оновлення
+								key={uploadFormState?.imageUrl ?? user.image}
 							/>
 						) : (
 							<div className="w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center text-gray-500">
@@ -128,53 +177,53 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 							</div>
 						)}
 					</div>
-					{/* Поле вибору файлу та кнопка завантаження */}
 					<div className="flex-grow">
 						<label
 							htmlFor="profileImage"
 							className="block text-sm font-medium text-gray-700 mb-1"
 						>
-							Neues Foto auswählen
+							Neues Foto auswählen (max. {MAX_FILE_SIZE_MB}MB)
 						</label>
 						<div className="flex items-center">
 							<input
 								type="file"
 								id="profileImage"
-								name="profileImage" // Важливо: name="profileImage"
+								name="profileImage"
 								accept="image/*"
 								onChange={handleFileChange}
 								ref={fileInputRef}
 								className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
 							/>
-							<SubmitPhotoButton />
+							<SubmitPhotoButton
+								disabled={!selectedFile || Boolean(fileError)}
+							/>
 						</div>
-						{/* Відображення імені вибраного файлу */}
-						{fileName && (
+						{selectedFile && !fileError && (
 							<p className="mt-1 text-xs text-gray-600">
-								Ausgewählt: {fileName}
+								Ausgewählt: {selectedFile.name}
 							</p>
+						)}
+						{fileError && (
+							<p className="mt-1 text-xs text-red-600">{fileError}</p>
 						)}
 					</div>
 				</div>
-				{/* Повідомлення про стан завантаження фото */}
-				{uploadFormState?.message && (
+				{/* Відображаємо displayUploadMessage замість uploadFormState */}
+				{displayUploadMessage?.message && (
 					<p
 						className={`mt-2 text-sm ${
-							uploadFormState.status === 'success'
+							displayUploadMessage.status === 'success'
 								? 'text-green-600'
 								: 'text-red-600'
 						}`}
 					>
-						{uploadFormState.message}
+						{displayUploadMessage.message}
 					</p>
 				)}
 			</form>
 
-			{/* Ваша існуюча форма для оновлення текстових даних профілю */}
 			<form action={updateFormAction} className="space-y-4">
 				<h2 className="text-lg font-medium">Profilinformationen bearbeiten</h2>
-				{/* ... всі ваші поля input/textarea для name, birthDate, gender, city, aboutMe ... */}
-				{/* Поле для імені */}
 				<div>
 					<label
 						htmlFor="name"
@@ -190,7 +239,6 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
 					/>
 				</div>
-				{/* Поле для дати народження */}
 				<div>
 					<label
 						htmlFor="birthDate"
@@ -206,7 +254,6 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
 					/>
 				</div>
-				{/* Поле для статі */}
 				<div>
 					<label
 						htmlFor="gender"
@@ -223,7 +270,6 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
 					/>
 				</div>
-				{/* Поле для міста */}
 				<div>
 					<label
 						htmlFor="city"
@@ -239,7 +285,6 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
 					/>
 				</div>
-				{/* Поле "Про себе" */}
 				<div>
 					<label
 						htmlFor="aboutMe"
@@ -255,18 +300,18 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
 					></textarea>
 				</div>
-				{/* Кнопка надсилання та повідомлення про стан */}
 				<div>
 					<SubmitProfileButton />
-					{updateFormState?.message && (
+					{/* Відображаємо displayUpdateMessage замість updateFormState */}
+					{displayUpdateMessage?.message && (
 						<p
 							className={`mt-2 text-sm ${
-								updateFormState.status === 'success'
+								displayUpdateMessage.status === 'success'
 									? 'text-green-600'
 									: 'text-red-600'
 							}`}
 						>
-							{updateFormState.message}
+							{displayUpdateMessage.message}
 						</p>
 					)}
 				</div>
