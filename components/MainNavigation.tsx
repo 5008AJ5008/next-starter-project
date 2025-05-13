@@ -3,7 +3,7 @@
 import { useToggle } from '@/hooks/useToggle';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { CgCloseO, CgMenuRound } from 'react-icons/cg';
 import { signOut } from 'next-auth/react';
 import Image from 'next/image';
