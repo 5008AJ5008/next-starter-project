@@ -90,29 +90,34 @@ export default async function UsersPage() {
 				{users.map((user) => {
 					const age = calculateAge(user.birthDate);
 					return (
+						// Додаємо 'relative' до самої картки
 						<div
 							key={user.id}
-							className="bg-white rounded-lg shadow-lg overflow-hidden transform transition-all hover:scale-105"
+							className="relative flex flex-col bg-white rounded-lg shadow-lg overflow-hidden transform transition-all hover:scale-105"
 						>
-							<div className="relative w-full h-64 sm:h-72">
+							{/* Контейнер для зображення зі співвідношенням сторін через padding-top */}
+							{/* Цей div вже має 'relative', що є правильним для next/image з fill */}
+							<div
+								className="relative w-full"
+								style={{ position: 'relative', paddingTop: '100%' }} // 100% для квадрата
+							>
 								{' '}
-								{/* Збільшено висоту для кращого вигляду фото */}
+								{/* 100% для квадрата */}
 								{user.image ? (
 									<Image
 										src={user.image}
 										alt={`Profilbild von ${user.name || 'Benutzer'}`}
-										fill // Використовуємо fill для заповнення контейнера
-										style={{ objectFit: 'cover' }} // object-fit: cover для кращого відображення
+										fill
+										style={{ objectFit: 'cover' }} // Заповнює контейнер, зберігаючи пропорції та обрізаючи зайве
 										sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
 									/>
 								) : (
-									<div className="w-full h-full bg-gray-300 flex items-center justify-center">
-										<span className="text-gray-500">Kein Bild</span>{' '}
-										{/* Немає фото */}
+									<div className="absolute inset-0 bg-gray-300 flex items-center justify-center">
+										<span className="text-gray-500">Kein Bild</span>
 									</div>
 								)}
 							</div>
-							<div className="p-4">
+							<div className="p-4 flex flex-col flex-grow">
 								<h2 className="text-xl font-semibold text-gray-800 mb-1 truncate">
 									{user.name || 'Unbekannter Benutzer'}
 									{age ? `, ${age}` : ''}
@@ -124,15 +129,14 @@ export default async function UsersPage() {
 								)}
 								{user.aboutMe && (
 									<p className="text-sm text-gray-500 mb-3 h-10 overflow-hidden text-ellipsis">
-										{' '}
-										{/* Обмеження висоти та багатокрапка */}
 										{user.aboutMe}
 									</p>
 								)}
-								{/* В майбутньому тут може бути посилання на повний профіль */}
-								{/* <Link href={`/users/${user.id}`}>
-                  <a className="text-blue-500 hover:text-blue-600 font-medium">Profil ansehen</a>
-                </Link> */}
+								<div className="mt-auto">
+									{/* <Link href={`/users/${user.id}`}>
+                    <a className="text-blue-500 hover:text-blue-600 font-medium">Profil ansehen</a>
+                  </Link> */}
+								</div>
 							</div>
 						</div>
 					);

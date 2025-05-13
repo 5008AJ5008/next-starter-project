@@ -97,7 +97,7 @@ export async function updateProfile(
 // --- Server Action для завантаження фото профілю ---
 
 // Схема валідації для файлу (можна залишити простою)
-const fileSchema = z.instanceof(File);
+// const fileSchema = z.instanceof(File);
 
 // Переконайтеся, що ця функція також експортована!
 export async function uploadProfilePhoto(
