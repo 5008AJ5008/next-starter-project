@@ -5,7 +5,6 @@ import { useFormStatus } from 'react-dom';
 import { updateProfile } from '@/actions/profileActions';
 import { uploadProfilePhoto } from '@/actions/profileActions';
 import Image from 'next/image';
-// Додаємо useEffect
 import { useState, useRef, useEffect } from 'react';
 import type { ChangeEvent } from 'react';
 
@@ -208,16 +207,15 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						)}
 					</div>
 				</div>
-				{/* Відображаємо displayUploadMessage замість uploadFormState */}
-				{displayUploadMessage?.message && (
+				{uploadFormState?.message && (
 					<p
 						className={`mt-2 text-sm ${
-							displayUploadMessage.status === 'success'
+							uploadFormState.status === 'success'
 								? 'text-green-600'
 								: 'text-red-600'
 						}`}
 					>
-						{displayUploadMessage.message}
+						{uploadFormState.message}
 					</p>
 				)}
 			</form>
@@ -254,21 +252,26 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
 					/>
 				</div>
+				{/* Оновлене поле для статі */}
 				<div>
 					<label
 						htmlFor="gender"
 						className="block text-sm font-medium text-gray-700"
 					>
-						Geschlecht
+						Geschlecht {/* Стать */}
 					</label>
-					<input
-						type="text"
+					<select
 						id="gender"
 						name="gender"
-						defaultValue={user.gender ?? ''}
-						placeholder="z.B. männlich, weiblich, divers"
-						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-					/>
+						defaultValue={user.gender ?? ''} // Встановлюємо поточне значення
+						className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+					>
+						<option value="">Bitte wählen...</option>{' '}
+						{/* Будь ласка, виберіть... */}
+						<option value="weiblich">Weiblich</option> {/* Жіноча */}
+						<option value="männlich">Männlich</option> {/* Чоловіча */}
+						<option value="divers">Divers</option> {/* Інша/Різна */}
+					</select>
 				</div>
 				<div>
 					<label
@@ -302,16 +305,15 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 				</div>
 				<div>
 					<SubmitProfileButton />
-					{/* Відображаємо displayUpdateMessage замість updateFormState */}
-					{displayUpdateMessage?.message && (
+					{updateFormState?.message && (
 						<p
 							className={`mt-2 text-sm ${
-								displayUpdateMessage.status === 'success'
+								updateFormState.status === 'success'
 									? 'text-green-600'
 									: 'text-red-600'
 							}`}
 						>
-							{displayUpdateMessage.message}
+							{updateFormState.message}
 						</p>
 					)}
 				</div>
