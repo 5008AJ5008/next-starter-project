@@ -1,0 +1,16 @@
+/* У вашому CSS файлі */
+.profile-container {
+	position: relative; /* Важливо для позиціонування дочірніх елементів, якщо потрібно */
+	max-width: 42rem; /* Обмеження ширини (еквівалент max-w-2xl) */
+	margin-left: auto; /* Центрування */
+	margin-right: auto; /* Центрування */
+	background-color: white; /* Якщо потрібно */
+	/* ... інші ваші стилі для цього контейнера ... */
+}
+
+.profile-image-container {
+	position: relative; /* Це вже є в inline-стилі, але можна залишити для ясності */
+	width: 100%;
+	/* paddingTop: '75%'; -- це задається inline */
+	overflow: hidden;
+}

@@ -3,11 +3,11 @@
 import { useToggle } from '@/hooks/useToggle';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { CgCloseO, CgMenuRound } from 'react-icons/cg';
 import { signOut } from 'next-auth/react';
 import Image from 'next/image';
-
+///////////////////////////////////////
 type LinkTarget = {
 	text: string;
 	url: string;
@@ -40,10 +40,6 @@ export default function MainNavigation({
 			url: '/',
 		},
 		{
-			text: 'Benutzer entdecken', // Знайти користувачів
-			url: '/users',
-		},
-		{
 			text: 'Profil bearbeiten', // Редагувати профіль
 			url: '/profile/edit',
 			isPrivate: true,
@@ -55,7 +51,7 @@ export default function MainNavigation({
 			isPrivate: true,
 		},
 		{
-			text: 'Lesezeichen', // Закладки
+			text: 'Bookmarks', // Закладки
 			url: '/bookmarks', // Заглушка для шляху
 			isPrivate: true,
 		},
@@ -98,14 +94,16 @@ export default function MainNavigation({
 						Hallo, {userName}!
 					</span> // Ховаємо на маленьких екранах
 				)}
-				<button
-					className="main-navigation__button" // Ваші стилі для кнопки меню
-					onClick={toggleMenu}
-					aria-expanded={isOpen}
-					aria-label="Hauptmenü"
-				>
-					Menü {isOpen ? <CgCloseO /> : <CgMenuRound />}
-				</button>
+				{isLoggedIn && (
+					<button
+						className="main-navigation__button" // Ваші стилі для кнопки меню
+						onClick={toggleMenu}
+						aria-expanded={isOpen}
+						aria-label="Hauptmenü"
+					>
+						Menü {isOpen ? <CgCloseO /> : <CgMenuRound />}
+					</button>
+				)}
 			</div>
 
 			{/* Випадаюче меню */}
@@ -188,3 +186,5 @@ function getMenuItems(
 			);
 		});
 }
+////////////////////
+//////////////////////////
