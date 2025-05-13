@@ -207,15 +207,16 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						)}
 					</div>
 				</div>
-				{uploadFormState?.message && (
+				{/* Відображаємо displayUploadMessage замість uploadFormState */}
+				{displayUploadMessage?.message && (
 					<p
 						className={`mt-2 text-sm ${
-							uploadFormState.status === 'success'
+							displayUploadMessage.status === 'success'
 								? 'text-green-600'
 								: 'text-red-600'
 						}`}
 					>
-						{uploadFormState.message}
+						{displayUploadMessage.message}
 					</p>
 				)}
 			</form>
@@ -252,7 +253,6 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
 					/>
 				</div>
-				{/* Оновлене поле для статі */}
 				<div>
 					<label
 						htmlFor="gender"
@@ -305,15 +305,16 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 				</div>
 				<div>
 					<SubmitProfileButton />
-					{updateFormState?.message && (
+					{/* Відображаємо displayUpdateMessage замість updateFormState */}
+					{displayUpdateMessage?.message && (
 						<p
 							className={`mt-2 text-sm ${
-								updateFormState.status === 'success'
+								displayUpdateMessage.status === 'success'
 									? 'text-green-600'
 									: 'text-red-600'
 							}`}
 						>
-							{updateFormState.message}
+							{displayUpdateMessage.message}
 						</p>
 					)}
 				</div>
