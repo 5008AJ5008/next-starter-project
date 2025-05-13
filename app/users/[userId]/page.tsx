@@ -27,7 +27,7 @@ type Props = {
 export async function generateMetadata(
 	{ params }: Props,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	parent: ResolvingMetadata
+	_parent: ResolvingMetadata
 ): Promise<Metadata> {
 	const awaitedParams = await params; // Правильно: очікуємо params
 	const userId = awaitedParams.userId;
