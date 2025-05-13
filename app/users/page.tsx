@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { auth } from '@/auth'; // Функція для отримання сесії
 import prisma from '@/lib/prisma'; // Ваш Prisma Client
 import Image from 'next/image';
-import Link from 'next/link'; // Для посилань на детальні профілі (в майбутньому)
+// import Link from 'next/link'; // Для посилань на детальні профілі (в майбутньому)
 
 export const metadata: Metadata = {
 	title: 'Benutzer entdecken', // Знайти користувачів / Переглянути профілі
