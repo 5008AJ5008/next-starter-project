@@ -20,17 +20,22 @@ function calculateAge(birthDate: Date | null): number | null {
 	return age;
 }
 
+// Тип Props для сторінки, де params є Promise
 type Props = {
-	params: { userId: string }; // Тип params залишається таким, Next.js обробляє Promise під капотом
+	// params тепер очікується як Promise, що містить об'єкт з userId
+	params: Promise<{ userId: string }>;
+	// searchParams?: Promise<{ [key: string]: string | string[] | undefined }>; // Якщо searchParams також асинхронні
 };
 
+// Функція для генерації динамічних метаданих
 export async function generateMetadata(
-	{ params }: Props,
+	{ params: paramsPromise }: Props, // Деструктуруємо params і перейменовуємо на paramsPromise
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	_parent: ResolvingMetadata
+	parent: ResolvingMetadata
 ): Promise<Metadata> {
-	const awaitedParams = await params; // Правильно: очікуємо params
-	const userId = awaitedParams.userId;
+	// Очікуємо розв'язання Promise, щоб отримати об'єкт параметрів
+	const params = await paramsPromise;
+	const userId = params.userId;
 
 	const user = await prisma.user.findUnique({
 		where: { id: userId },
@@ -48,12 +53,14 @@ export async function generateMetadata(
 	};
 }
 
-export default async function UserProfilePage({ params }: Props) {
-	// --- ЗМІНА ТУТ ---
-	// Очікуємо params перед доступом до userId, як рекомендує документація
-	const awaitedParams = await params;
-	const userId = awaitedParams.userId;
-	// ------------------
+// Основний компонент сторінки
+export default async function UserProfilePage({
+	params: paramsPromise,
+}: Props) {
+	// Деструктуруємо params і перейменовуємо на paramsPromise
+	// Очікуємо розв'язання Promise, щоб отримати об'єкт параметрів
+	const params = await paramsPromise;
+	const userId = params.userId;
 
 	const session = await auth();
 	const isAuthenticated = Boolean(session?.user);
