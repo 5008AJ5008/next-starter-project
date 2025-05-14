@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import ChatMessageForm from './ChatMessageForm';
+import { markChatAsRead } from '@/actions/chatActions';
 
 export interface Author {
 	id: string;
@@ -67,6 +68,27 @@ export default function ChatInterface({
 			return prevMessages;
 		});
 	}, []); // setMessages є стабільною функцією, тому масив залежностей порожній
+
+	// 2. useEffect для позначки чату як прочитаного при завантаженні
+	useEffect(() => {
+		if (chatId && currentUserId) {
+			// Викликаємо Server Action для оновлення lastReadAt
+			// Ми не обробляємо результат тут, оскільки це фонова дія
+			markChatAsRead(chatId).then((response) => {
+				if (response.success) {
+					console.log(`Chat ${chatId} successfully marked as read on client.`);
+					// Тут можна було б ініціювати оновлення лічильника в хедері,
+					// але revalidatePath в Server Action має це зробити для наступних завантажень.
+				} else {
+					console.error(
+						`Failed to mark chat ${chatId} as read:`,
+						response.error
+					);
+				}
+			});
+		}
+		// Цей ефект має виконатися тільки один раз при монтуванні компонента для даного чату
+	}, [chatId, currentUserId]); // Запускається, коли chatId або currentUserId змінюються (або при першому рендері)
 
 	// Оновлюємо pollingFunctionRef, коли змінюються залежності, які вона використовує
 	useEffect(() => {

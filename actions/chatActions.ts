@@ -234,3 +234,100 @@ export async function sendMessage(
 		};
 	}
 }
+
+// Оновлена Server Action для отримання кількості непрочитаних повідомлень
+export async function getUnreadMessageCount(): Promise<number> {
+	const session = await auth();
+	if (!session?.user?.id) {
+		return 0;
+	}
+	const currentUserId = session.user.id;
+
+	try {
+		// Отримуємо всі чати, в яких користувач є учасником
+		const participations = await prisma.chatParticipant.findMany({
+			where: { userId: currentUserId },
+			select: {
+				chatId: true,
+				lastReadAt: true, // Час, коли користувач востаннє читав цей чат
+			},
+		});
+
+		if (participations.length === 0) {
+			return 0;
+		}
+
+		let totalUnreadCount = 0;
+
+		// Для кожного чату, в якому бере участь користувач, рахуємо непрочитані повідомлення
+		for (const participation of participations) {
+			const unreadMessagesInChat = await prisma.message.count({
+				where: {
+					chatId: participation.chatId,
+					authorId: {
+						not: currentUserId, // Повідомлення від інших користувачів
+					},
+					createdAt: {
+						// Повідомлення, створені ПІСЛЯ того, як користувач востаннє читав цей чат
+						// Якщо lastReadAt є null, то всі повідомлення від інших вважаються непрочитаними
+						gt: participation.lastReadAt || new Date(0), // new Date(0) - дуже стара дата
+					},
+				},
+			});
+			totalUnreadCount += unreadMessagesInChat;
+		}
+
+		return totalUnreadCount;
+	} catch (error) {
+		console.error(
+			'Fehler beim Abrufen der Anzahl ungelesener Nachrichten:',
+			error
+		);
+		return 0; // Повертаємо 0 у разі помилки
+	}
+}
+
+// --- НОВА SERVER ACTION ДЛЯ ПОЗНАЧКИ ЧАТУ ЯК ПРОЧИТАНОГО ---
+export async function markChatAsRead(
+	chatId: string
+): Promise<{ success: boolean; error?: string }> {
+	const session = await auth();
+	if (!session?.user?.id) {
+		console.error('markChatAsRead: Nicht autorisiert.');
+		return { success: false, error: 'Nicht autorisiert.' };
+	}
+	const currentUserId = session.user.id;
+
+	try {
+		await prisma.chatParticipant.update({
+			where: {
+				userId_chatId: {
+					// Використовуємо унікальний складений ключ
+					userId: currentUserId,
+					chatId,
+				},
+			},
+			data: {
+				lastReadAt: new Date(), // Встановлюємо поточний час
+			},
+		});
+		// Після позначки чату як прочитаного, потрібно оновити дані,
+		// які залежать від кількості непрочитаних повідомлень, наприклад, хедер.
+		revalidatePath('/'); // Головна сторінка (якщо хедер там)
+		revalidatePath('/chat'); // Сторінка списку чатів
+		// Якщо у вас є інші сторінки, де відображається лічильник, їх теж потрібно ревалідувати.
+		// Або, що краще, ревалідувати сам компонент хедера, якщо це можливо (залежить від архітектури)
+		// Для простоти, поки що ревалідуємо головну.
+		console.log(`Chat ${chatId} marked as read for user ${currentUserId}`);
+		return { success: true };
+	} catch (error) {
+		console.error(
+			`Fehler beim Markieren des Chats ${chatId} als gelesen:`,
+			error
+		);
+		return {
+			success: false,
+			error: 'Fehler beim Aktualisieren des Lesestatus.',
+		};
+	}
+}

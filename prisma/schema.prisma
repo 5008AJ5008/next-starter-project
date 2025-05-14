@@ -94,6 +94,9 @@ model ChatParticipant {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
+  // Нове поле для відстеження, коли користувач востаннє читав цей чат
+  lastReadAt DateTime?
+
   @@unique([userId, chatId]) // Користувач може бути учасником чату тільки один раз
 }
 

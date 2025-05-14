@@ -72,3 +72,7 @@ a {
 .user-info {
 	margin-right: 20px;
 }
+
+.unread-messages-button {
+	margin: 10px;
+}

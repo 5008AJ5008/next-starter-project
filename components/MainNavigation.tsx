@@ -4,7 +4,7 @@ import { useToggle } from '@/hooks/useToggle';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { CgCloseO, CgMenuRound } from 'react-icons/cg';
+import { CgCloseO, CgMenuRound, CgMail, CgMailOpen } from 'react-icons/cg'; // CgMail - для звичайного стану, CgMailOpen - для непрочитаних
 import { signOut } from 'next-auth/react';
 import Image from 'next/image';
 ///////////////////////////////////////
@@ -21,12 +21,14 @@ type Props = {
 	isLoggedIn: boolean;
 	userName?: string | null;
 	userImage?: string | null;
+	unreadMessageCount?: number; // Кількість непрочитаних повідомлень
 };
 
 export default function MainNavigation({
 	isLoggedIn,
 	userName,
 	userImage,
+	unreadMessageCount = 0, // 2. Приймаємо unreadMessageCount, встановлюємо значення за замовчуванням
 }: Props) {
 	const [isOpen, toggleMenu, , , closeMenu] = useToggle(false);
 	const pathname = usePathname();
@@ -63,6 +65,8 @@ export default function MainNavigation({
 		// ----------------------------------------------------
 	];
 
+	const hasUnreadMessages = unreadMessageCount > 0;
+
 	return (
 		// Додаємо flex-контейнер для розміщення логотипу зліва та решти справа
 		<nav className="main-navigation">
@@ -75,6 +79,24 @@ export default function MainNavigation({
 			<div className="user-info">
 				{' '}
 				{/* Контейнер для інформації про користувача та кнопки меню */}
+				{isLoggedIn && (
+					<Link
+						href="/chat"
+						className="unread-messages-button"
+						aria-label="Meine Chats"
+					>
+						{hasUnreadMessages ? (
+							<CgMailOpen size={22} className="text-blue-600" /> // Іконка для непрочитаних
+						) : (
+							<CgMail size={22} className="text-gray-600" /> // Стандартна іконка
+						)}
+						{hasUnreadMessages && (
+							<span className="absolute top-0 right-0 block h-4 w-4 transform -translate-y-1/2 translate-x-1/2 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+								{unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+							</span>
+						)}
+					</Link>
+				)}
 				{/* Відображення імені та аватара, якщо користувач увійшов */}
 				{isLoggedIn && userImage && (
 					<Image
