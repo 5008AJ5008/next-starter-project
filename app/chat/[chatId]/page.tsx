@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { notFound, redirect } from 'next/navigation';
-import Image from 'next/image';
-// import { format } from 'date-fns';
-// import { de } from 'date-fns/locale';
-
-// 1. Імпортуємо компонент форми
-import ChatMessageForm from '@/components/chat/ChatMessageForm'; // Переконайтеся, що шлях правильний
+// 1. Імпортуємо компонент ChatInterface
+import ChatInterface from '@/components/chat/ChatInterface'; // Переконайтеся, що шлях правильний
+// Типи Message та Author тепер можна взяти з ChatInterface, якщо вони там експортовані,
+// або залишити їх визначення в ChatInterface і передавати дані відповідного типу.
+// Для простоти, припустимо, що ChatInterface очікує дані у форматі, який ми підготуємо.
+import type { Message, Author } from '@/components/chat/ChatInterface'; // Припускаємо, що ці типи експортовані
 
 type Props = {
 	params: Promise<{ chatId: string }>;
@@ -56,10 +56,10 @@ export default async function ChatPage({ params: paramsPromise }: Props) {
 	if (!session?.user?.id) {
 		redirect(`/api/auth/signin?callbackUrl=/chat/${chatId}`);
 	}
-
 	const currentUserId = session.user.id;
 
-	const chat = await prisma.chat.findUnique({
+	// Завантажуємо дані чату та початкові повідомлення
+	const chatWithMessages = await prisma.chat.findUnique({
 		where: {
 			id: chatId,
 			participants: {
@@ -72,14 +72,17 @@ export default async function ChatPage({ params: paramsPromise }: Props) {
 			participants: {
 				include: {
 					user: {
+						// Включаємо повні дані користувача для учасників
 						select: { id: true, name: true, image: true },
 					},
 				},
 			},
 			messages: {
+				// Завантажуємо всі повідомлення для початкового відображення
 				include: {
 					author: {
-						select: { id: true, name: true, image: true }, // Включаємо дані автора повідомлення
+						// Включаємо дані автора для кожного повідомлення
+						select: { id: true, name: true, image: true },
 					},
 				},
 				orderBy: {
@@ -89,99 +92,53 @@ export default async function ChatPage({ params: paramsPromise }: Props) {
 		},
 	});
 
-	if (!chat) {
+	if (!chatWithMessages) {
 		notFound();
 	}
 
-	const otherParticipant = chat.participants.find(
+	// Готуємо дані для передачі в клієнтський компонент
+	// Перетворюємо Date на ISO рядок для серіалізації
+	const initialMessages: Message[] = chatWithMessages.messages.map((msg) => ({
+		id: msg.id,
+		content: msg.content,
+		createdAt: msg.createdAt.toISOString(), // Важливо для серіалізації
+		authorId: msg.authorId,
+		author: {
+			// Переконуємося, що автор не null і має потрібні поля
+			id: msg.author.id,
+			name: msg.author.name,
+			image: msg.author.image,
+		},
+		chatId: msg.chatId,
+	}));
+
+	const otherParticipantData = chatWithMessages.participants.find(
 		(p) => p.userId !== currentUserId
 	)?.user;
 
+	// Перетворюємо на тип Author, обробляючи можливий undefined
+	const otherParticipant: Author | null = otherParticipantData
+		? {
+				id: otherParticipantData.id,
+				name: otherParticipantData.name,
+				image: otherParticipantData.image,
+		  }
+		: null;
+
 	return (
-		<main className="container mx-auto px-0 sm:px-4 py-0 flex flex-col h-[calc(100vh-var(--header-height,4rem))]">
-			<header className="p-4 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
-				<div className="flex items-center space-x-3">
-					{otherParticipant?.image && (
-						<Image
-							src={otherParticipant.image}
-							alt={`Avatar von ${otherParticipant.name || 'Benutzer'}`}
-							width={40}
-							height={40}
-							className="rounded-full"
-						/>
-					)}
-					<h1 className="text-xl font-semibold">
-						{otherParticipant?.name || 'Unbekannter Benutzer'}
-					</h1>
-				</div>
-			</header>
-
-			<div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-100">
-				{chat.messages.length === 0 && (
-					<p className="text-center text-gray-500">
-						Noch keine Nachrichten in diesem Chat.
-					</p>
-				)}
-				{chat.messages.map((message) => (
-					<div
-						key={message.id}
-						className={`flex ${
-							message.authorId === currentUserId
-								? 'justify-end'
-								: 'justify-start'
-						}`}
-					>
-						{/* Можна додати аватар автора повідомлення поруч з повідомленням */}
-						{message.authorId !== currentUserId && message.author.image && (
-							<Image
-								src={message.author.image}
-								alt={message.author.name || ''}
-								width={24}
-								height={24}
-								className="rounded-full mr-2 self-end"
-							/>
-						)}
-						<div
-							className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg shadow ${
-								// Зменшено padding
-								message.authorId === currentUserId
-									? 'bg-blue-500 text-white'
-									: 'bg-white text-gray-800 border border-gray-200' // Додано рамку для чужих повідомлень
-							}`}
-						>
-							<p className="text-sm">{message.content}</p>
-							<p
-								className={`text-xs mt-1 ${
-									message.authorId === currentUserId
-										? 'text-blue-100'
-										: 'text-gray-400'
-								} text-right`}
-							>
-								{new Date(message.createdAt).toLocaleTimeString('de-DE', {
-									hour: '2-digit',
-									minute: '2-digit',
-								})}
-							</p>
-						</div>
-						{message.authorId === currentUserId && message.author.image && (
-							<Image
-								src={message.author.image}
-								alt={message.author.name || ''}
-								width={24}
-								height={24}
-								className="rounded-full ml-2 self-end"
-							/>
-						)}
-					</div>
-				))}
-			</div>
-
-			{/* 2. Додаємо компонент форми надсилання повідомлення */}
-			<div className="p-4 border-t border-gray-200 bg-white sticky bottom-0">
-				{' '}
-				{/* Змінено фон на білий */}
-				<ChatMessageForm chatId={chat.id} />
-			</div>
+		// Основний контейнер сторінки
+		// h-[calc(100vh-var(--header-height,4rem))] - це Tailwind клас для висоти.
+		// Якщо ви не використовуєте Tailwind, вам потрібно буде задати висоту через CSS.
+		// Наприклад, style={{ height: 'calc(100vh - 64px)' }} (якщо висота хедера 64px)
+		<main className="chat-page-container">
+			{' '}
+			{/* Замініть на ваш клас або додайте стилі */}
+			<ChatInterface
+				initialMessages={initialMessages}
+				chatId={chatId}
+				currentUserId={currentUserId}
+				otherParticipant={otherParticipant}
+			/>
 		</main>
 	);
 }

@@ -103,6 +103,7 @@ export default async function ChatListPage() {
 											width={50}
 											height={50}
 											className="rounded-full"
+											style={{ objectFit: 'cover' }}
 										/>
 									) : (
 										<div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
