@@ -13,7 +13,7 @@ export interface Author {
 export interface Message {
 	id: string;
 	content: string;
-	createdAt: string;
+	createdAt: string; // Зберігаємо як рядок
 	authorId: string;
 	author: Author;
 	chatId: string;
@@ -37,7 +37,7 @@ export default function ChatInterface({
 	otherParticipant,
 }: ChatInterfaceProps) {
 	const [messages, setMessages] = useState<Message[]>(initialMessages);
-	const [isLoading, setIsLoading] = useState(false); // Для Long Polling
+	const [isLoading, setIsLoading] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
 	const scrollToBottom = () => {
@@ -46,14 +46,12 @@ export default function ChatInterface({
 
 	useEffect(() => {
 		setMessages(initialMessages);
-		scrollToBottom();
 	}, [initialMessages]);
 
 	useEffect(() => {
 		scrollToBottom();
 	}, [messages]);
 
-	// Функція для додавання нового повідомлення, отриманого від ChatMessageForm
 	const handleNewMessageFromForm = (newMessage: Message) => {
 		setMessages((prevMessages) => {
 			if (!prevMessages.find((msg) => msg.id === newMessage.id)) {
@@ -63,39 +61,67 @@ export default function ChatInterface({
 		});
 	};
 
-	// Long Polling для отримання повідомлень від інших користувачів
+	// useEffect для Long Polling
 	useEffect(() => {
 		let isActive = true;
+		const controller = new AbortController();
+
 		const startPolling = async () => {
 			if (!isActive || isLoading) return;
 			setIsLoading(true);
 
+			// 'messages' використовується тут для lastTimestamp
 			const lastTimestamp =
 				messages.length > 0
 					? messages[messages.length - 1].createdAt
 					: new Date(0).toISOString();
+			// 'currentUserId', 'otherParticipant?.id', 'otherParticipant?.name' використовуються в console.log
+			console.log(
+				`[${
+					currentUserId === otherParticipant?.id
+						? 'SELF'
+						: otherParticipant?.name || 'Other'
+				}] Polling with lastTimestamp: ${lastTimestamp}`
+			);
 
 			try {
 				const response = await fetch(
+					// 'chatId' використовується тут
 					`/api/chat/${chatId}/messages/poll?lastMessageTimestamp=${encodeURIComponent(
 						lastTimestamp
-					)}`
+					)}`,
+					{
+						cache: 'no-store',
+						signal: controller.signal,
+					}
 				);
+
 				if (!isActive) return;
 
 				if (!response.ok) {
-					console.error('Polling error:', response.status, response.statusText);
-					await new Promise((resolve) => setTimeout(resolve, 5000));
+					// 'otherParticipant?.name' використовується в console.error
+					console.error(
+						`[${otherParticipant?.name || 'Other'}] Polling error:`,
+						response.status,
+						response.statusText
+					);
+					await new Promise((resolve) => setTimeout(resolve, 10000));
 				} else {
 					const data = (await response.json()) as PollResponse;
 					if (!isActive) return;
 
 					if (data.messages && data.messages.length > 0) {
+						// 'otherParticipant?.name' використовується в console.log
+						console.log(
+							`[${otherParticipant?.name || 'Other'}] Polled new messages:`,
+							data.messages
+						);
 						setMessages((prevMessages) => {
 							const uniqueNewMessages = data.messages.filter(
-								(newMessage) =>
+								(newMessagePolled) =>
 									!prevMessages.some(
-										(existingMessage) => existingMessage.id === newMessage.id
+										(existingMessage) =>
+											existingMessage.id === newMessagePolled.id
 									)
 							);
 							if (uniqueNewMessages.length > 0) {
@@ -105,95 +131,112 @@ export default function ChatInterface({
 						});
 					}
 				}
-			} catch (error) {
+			} catch (error: unknown) {
 				if (!isActive) return;
-				console.error('Failed to fetch new messages (catch):', error);
-				await new Promise((resolve) => setTimeout(resolve, 5000));
+				if (error instanceof Error) {
+					if (error.name === 'AbortError') {
+						// 'otherParticipant?.name' використовується в console.log
+						console.log(
+							`[${
+								otherParticipant?.name || 'Other'
+							}] Fetch aborted for polling.`
+						);
+					} else {
+						// 'otherParticipant?.name' використовується в console.error
+						console.error(
+							`[${
+								otherParticipant?.name || 'Other'
+							}] Failed to fetch new messages (catch):`,
+							error.message
+						);
+					}
+				} else {
+					// 'otherParticipant?.name' використовується в console.error
+					console.error(
+						`[${
+							otherParticipant?.name || 'Other'
+						}] An unknown error occurred during polling:`,
+						error
+					);
+				}
+				if (!(error instanceof Error && error.name === 'AbortError')) {
+					await new Promise((resolve) => setTimeout(resolve, 10000));
+				}
 			} finally {
 				if (isActive) {
 					setIsLoading(false);
-					setTimeout(startPolling, 1000);
+					setTimeout(startPolling, 2000);
 				}
 			}
 		};
 
 		if (chatId) {
+			// 'chatId' використовується тут
 			startPolling();
 		}
 
 		return () => {
 			isActive = false;
+			controller.abort();
+			// 'otherParticipant?.name' використовується в console.log
+			console.log(`[${otherParticipant?.name || 'Other'}] Polling stopped.`);
 		};
-	}, [chatId, messages, isLoading]);
+		// Оновлений масив залежностей, що включає всі необхідні змінні
+	}, [chatId, isLoading, messages, currentUserId, otherParticipant]); // Змінено otherParticipant?.id та otherParticipant?.name на otherParticipant
 
 	return (
 		<div className="chat-interface-wrapper">
-			{' '}
-			{/* Ваш клас: display: flex; flex-direction: column; height: 100%; */}
 			<header className="chat-header">
-				{' '}
-				{/* Ваш клас: flex-shrink: 0; ... */}
 				<div className="chat-header-content">
-					{' '}
-					{/* Ваш клас: display: flex; align-items: center; ... */}
 					{otherParticipant?.image && (
 						<Image
 							src={otherParticipant.image}
 							alt={`Avatar von ${otherParticipant.name || 'Benutzer'}`}
 							width={40}
 							height={40}
-							className="chat-header-avatar" // Ваш клас
-							style={{ objectFit: 'cover' }} // Додано для правильного масштабування
+							className="chat-header-avatar"
+							style={{ objectFit: 'cover' }}
 						/>
 					)}
 					<h1 className="chat-header-name">
-						{' '}
-						{/* Ваш клас */}
 						{otherParticipant?.name || 'Unbekannter Benutzer'}
 					</h1>
 				</div>
 			</header>
+
 			<div className="chat-messages-list">
-				{' '}
-				{/* Ваш клас: flex-grow: 1; overflow-y: auto; padding: 1rem; ... */}
 				{messages.length === 0 && (
 					<p className="chat-no-messages-text">
 						Noch keine Nachrichten in diesem Chat.
 					</p>
 				)}
 				{messages.map((message) => (
-					// Використовуємо ваші класи для контейнера повідомлення
 					<div
 						key={message.id}
-						className={`message-container ${
-							// Базовий клас
+						className={`message-row ${
 							message.authorId === currentUserId
-								? 'my-message-container'
-								: 'other-message-container' // Для вирівнювання
+								? 'message-row--own'
+								: 'message-row--other'
 						}`}
 					>
-						{/* Аватар для чужих повідомлень */}
 						{message.authorId !== currentUserId && message.author.image && (
 							<Image
 								src={message.author.image}
 								alt={message.author.name || ''}
-								width={24} // Розмір аватара в повідомленні
+								width={24}
 								height={24}
-								className="message-avatar message-avatar--other" // Ваші класи
+								className="message-avatar message-avatar--other"
 								style={{ objectFit: 'cover' }}
 							/>
 						)}
-						{/* Бульбашка повідомлення */}
 						<div
-							className={`chat-message-bubble ${
-								// Базовий клас для бульбашки
+							className={`message-bubble ${
 								message.authorId === currentUserId
-									? 'my-message' // Клас для ваших повідомлень
-									: 'other-message' // Клас для чужих повідомлень
+									? 'message-bubble--own'
+									: 'message-bubble--other'
 							}`}
 						>
-							<p className="message-content">{message.content}</p>{' '}
-							{/* Ваш клас для тексту */}
+							<p className="message-content">{message.content}</p>
 							<p
 								className={`message-timestamp ${
 									message.authorId === currentUserId
@@ -201,22 +244,19 @@ export default function ChatInterface({
 										: 'message-timestamp--other'
 								}`}
 							>
-								{' '}
-								{/* Ваші класи для часу */}
 								{new Date(message.createdAt).toLocaleTimeString('de-DE', {
 									hour: '2-digit',
 									minute: '2-digit',
 								})}
 							</p>
 						</div>
-						{/* Аватар для ваших повідомлень */}
 						{message.authorId === currentUserId && message.author.image && (
 							<Image
 								src={message.author.image}
 								alt={message.author.name || ''}
-								width={24} // Розмір аватара в повідомленні
+								width={24}
 								height={24}
-								className="message-avatar message-avatar--own" // Ваші класи
+								className="message-avatar message-avatar--own"
 								style={{ objectFit: 'cover' }}
 							/>
 						)}
@@ -224,9 +264,8 @@ export default function ChatInterface({
 				))}
 				<div ref={messagesEndRef} />
 			</div>
+
 			<div className="chat-form-container">
-				{' '}
-				{/* Ваш клас: flex-shrink: 0; ... */}
 				<ChatMessageForm
 					chatId={chatId}
 					onMessageSent={handleNewMessageFromForm}
