@@ -3,7 +3,8 @@
 import { useFormStatus } from 'react-dom';
 import { useActionState } from 'react';
 import { sendMessage } from '@/actions/chatActions';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { ChangeEvent } from 'react';
 // 1. Імпортуємо тип Message з ChatInterface (переконайтеся, що він експортований)
 import type { Message } from './ChatInterface';
 
@@ -50,16 +51,33 @@ export default function ChatMessageForm({
 	const formRef = useRef<HTMLFormElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 
+	// 1. Стан для значення поля вводу
+	const [inputValue, setInputValue] = useState('');
+
 	useEffect(() => {
+		console.log('ChatMessageForm formState updated:', formState);
 		if (formState?.status === 'success') {
-			formRef.current?.reset(); // Скидаємо поля форми
-			inputRef.current?.focus(); // Повертаємо фокус на поле вводу
-			// 4. Якщо є нове повідомлення, викликаємо callback onMessageSent
+			setInputValue(''); // 2. Очищуємо стан inputValue після успішного надсилання
+			// formRef.current?.reset(); // Це може бути вже не потрібно, оскільки інпут контрольований
+			inputRef.current?.focus();
 			if (formState.newMessage) {
+				console.log(
+					'ChatMessageForm calling onMessageSent with:',
+					formState.newMessage
+				);
 				onMessageSent(formState.newMessage);
+			} else {
+				console.warn(
+					'ChatMessageForm: newMessage is missing in formState on success.'
+				);
 			}
 		}
 	}, [formState, onMessageSent]);
+
+	// 3. Обробник для оновлення стану inputValue
+	const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+		setInputValue(event.target.value);
+	};
 
 	return (
 		<form ref={formRef} action={formAction} className="chat-message-form">
@@ -68,11 +86,13 @@ export default function ChatMessageForm({
 			<input
 				ref={inputRef}
 				type="text"
-				name="content" // Це ім'я має відповідати тому, що очікує messageSchema в Server Action
+				name="content" // Атрибут name все ще потрібен для Server Action FormData
 				placeholder="Nachricht eingeben..."
 				required
 				className="chat-form-input" // Використовуйте ваші CSS класи
 				autoComplete="off"
+				value={inputValue} // 4. Прив'язуємо value до стану
+				onChange={handleInputChange} // 5. Оновлюємо стан при зміні
 			/>
 			<SubmitButton />
 			{formState?.status === 'error' &&
