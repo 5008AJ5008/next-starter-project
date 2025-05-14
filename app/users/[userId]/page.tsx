@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { auth } from '@/auth';
+import { createOrFindChatAndRedirect } from '@/actions/chatActions';
 
 // Допоміжна функція для розрахунку віку
 function calculateAge(birthDate: Date | null): number | null {
@@ -64,6 +65,7 @@ export default async function UserProfilePage({
 
 	const session = await auth();
 	const isAuthenticated = Boolean(session?.user);
+	const currentUserId = session?.user?.id;
 
 	const user = await prisma.user.findUnique({
 		where: { id: userId },
@@ -84,6 +86,8 @@ export default async function UserProfilePage({
 	}
 
 	const age = calculateAge(user.birthDate);
+
+	const startChatAction = createOrFindChatAndRedirect.bind(null, user.id);
 
 	return (
 		// Замість Tailwind класів для контейнера, можна використовувати ваш default-layout,
@@ -169,16 +173,28 @@ export default async function UserProfilePage({
 						</div>
 					)}
 
-					{isAuthenticated && session?.user?.id !== user.id && (
-						<div className="mt-6 pt-4 border-t border-gray-200">
-							<button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mr-2">
-								Like
-							</button>
-							<button className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-								Nachricht senden
-							</button>
-						</div>
-					)}
+					{isAuthenticated &&
+						currentUserId !== user.id && ( // Показуємо тільки якщо авторизований І це не власний профіль
+							<div className="mt-6 pt-4 border-t border-gray-200">
+								{' '}
+								{/* Приклад Tailwind, замініть на ваші класи */}
+								<form action={startChatAction}>
+									{' '}
+									{/* Викликаємо Server Action */}
+									<button
+										type="submit"
+										// Додайте ваші класи для кнопки
+										className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+									>
+										Nachricht senden
+									</button>
+								</form>
+								{/* Можна залишити кнопку Like окремо, якщо її логіка інша і вона не є Server Action */}
+								{/* <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mr-2">
+                Like
+              </button> */}
+							</div>
+						)}
 				</div>
 			</div>
 		</main>

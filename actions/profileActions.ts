@@ -28,7 +28,7 @@ const profileSchema = z.object({
 	name: z
 		.string()
 		.min(1, 'Name ist erforderlich')
-		.max(100, 'Name zu lang')
+		.max(20, 'Name zu lang')
 		.optional()
 		.or(z.literal('')),
 	birthDate: z.preprocess((arg) => {
@@ -40,8 +40,8 @@ const profileSchema = z.object({
 		}
 	}, z.date().nullable().optional()),
 	gender: z.string().max(50, 'Angabe zu lang').optional().or(z.literal('')),
-	city: z.string().max(100, 'Stadtname zu lang').optional().or(z.literal('')),
-	aboutMe: z.string().max(1000, 'Text zu lang').optional().or(z.literal('')),
+	city: z.string().max(20, 'Stadtname zu lang').optional().or(z.literal('')),
+	aboutMe: z.string().max(50, 'Text zu lang').optional().or(z.literal('')),
 });
 
 // Переконайтеся, що ця функція експортована!

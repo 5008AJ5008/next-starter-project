@@ -55,6 +55,12 @@ model User {
   // Зв'язки для NextAuth
   accounts Account[]
   sessions Session[]
+
+  // --- Зв'язки для Чату ---
+  // Чати, в яких користувач є учасником
+  chats        ChatParticipant[]
+  // Повідомлення, надіслані цим користувачем
+  sentMessages Message[]         @relation("SentMessages")
 }
 
 model VerificationToken {
@@ -63,4 +69,48 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// --- НОВІ МОДЕЛІ ДЛЯ ЧАТУ ---
+
+// Модель для представлення чату/розмови
+model Chat {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt // Оновлюється при новому повідомленні
+
+  // Учасники цього чату (зв'язок багато-до-багатьох через ChatParticipant)
+  participants ChatParticipant[]
+  // Повідомлення в цьому чаті
+  messages     Message[]
+}
+
+// Проміжна модель для зв'язку багато-до-багатьох між User та Chat
+model ChatParticipant {
+  id     String @id @default(cuid())
+  userId String
+  chatId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chatId]) // Користувач може бути учасником чату тільки один раз
+}
+
+// Модель для представлення окремого повідомлення
+model Message {
+  id        String   @id @default(cuid())
+  content   String   @db.Text // Вміст повідомлення
+  createdAt DateTime @default(now())
+
+  // Автор повідомлення
+  authorId String
+  author   User   @relation("SentMessages", fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Чат, до якого належить повідомлення
+  chatId String
+  chat   Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  // Можна додати статус (наприклад, "прочитано"), якщо потрібно
+  // isRead Boolean @default(false)
 }

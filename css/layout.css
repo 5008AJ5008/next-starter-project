@@ -17,9 +17,13 @@ body {
 
 .site-header {
 	color: var(--heading-color);
-	/* display: flex; */
+	display: flex;
 	align-items: center;
 	position: relative;
+	margin-left: 0px;
+	margin-right: 0px;
+	padding-left: 0px;
+	padding-right: 0px;
 	.site-header__title {
 		font-family: var(--font-karla);
 		font-size: 3rem;

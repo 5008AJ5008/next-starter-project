@@ -234,6 +234,7 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						type="text"
 						id="name"
 						name="name"
+						placeholder="Ihr Name, max. 20 Zeichen"
 						defaultValue={user.name ?? ''}
 						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
 					/>
@@ -284,6 +285,7 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						type="text"
 						id="city"
 						name="city"
+						placeholder="Ihre Stadt, max. 20 Zeichen"
 						defaultValue={user.city ?? ''}
 						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
 					/>
@@ -298,6 +300,7 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 					<textarea
 						id="aboutMe"
 						name="aboutMe"
+						placeholder="Ihr Text, max. 50 Zeichen"
 						rows={4}
 						defaultValue={user.aboutMe ?? ''}
 						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"

@@ -65,18 +65,14 @@ export default function MainNavigation({
 
 	return (
 		// Додаємо flex-контейнер для розміщення логотипу зліва та решти справа
-		<nav className="main-navigation flex items-center justify-between w-full">
+		<nav className="main-navigation">
 			{/* Логотип (посилання на головну) */}
-			<Link
-				href="/"
-				className="text-xl font-bold text-gray-800 hover:text-blue-600"
-				onClick={closeMenu}
-			>
+			<Link href="/" className="main-navigation__logo" onClick={closeMenu}>
 				{/* Замініть "Logo" на ваш <Image /> компонент або SVG */}
 				Badoo-Clone
 			</Link>
 
-			<div className="flex items-center">
+			<div className="user-info">
 				{' '}
 				{/* Контейнер для інформації про користувача та кнопки меню */}
 				{/* Відображення імені та аватара, якщо користувач увійшов */}
@@ -108,7 +104,7 @@ export default function MainNavigation({
 
 			{/* Випадаюче меню */}
 			{isOpen && (
-				<ul className="main-navigation__list absolute right-0 mt-10 py-2 w-48 bg-white rounded-md shadow-xl z-20">
+				<ul className="main-navigation__list">
 					{' '}
 					{/* Позиціонування меню */}
 					{getMenuItems(linkTargets, pathname, isLoggedIn, closeMenu)}
