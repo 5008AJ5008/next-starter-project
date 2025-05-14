@@ -39,6 +39,9 @@ export default function ChatInterface({
 	const [messages, setMessages] = useState<Message[]>(initialMessages);
 	const [isLoading, setIsLoading] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const pollingFunctionRef = useRef<(() => Promise<void>) | undefined>(
+		undefined
+	);
 
 	const scrollToBottom = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -61,59 +64,41 @@ export default function ChatInterface({
 		});
 	};
 
-	// useEffect для Long Polling
+	// Оновлюємо pollingFunctionRef, коли змінюються залежності, які вона використовує
 	useEffect(() => {
-		let isActive = true;
-		const controller = new AbortController();
-
-		const startPolling = async () => {
-			if (!isActive || isLoading) return;
+		pollingFunctionRef.current = async () => {
+			if (isLoading) return;
 			setIsLoading(true);
 
-			// 'messages' використовується тут для lastTimestamp
+			const currentMessages = messages;
 			const lastTimestamp =
-				messages.length > 0
-					? messages[messages.length - 1].createdAt
+				currentMessages.length > 0
+					? currentMessages[currentMessages.length - 1].createdAt
 					: new Date(0).toISOString();
-			// 'currentUserId', 'otherParticipant?.id', 'otherParticipant?.name' використовуються в console.log
 			console.log(
-				`[${
-					currentUserId === otherParticipant?.id
-						? 'SELF'
-						: otherParticipant?.name || 'Other'
-				}] Polling with lastTimestamp: ${lastTimestamp}`
+				`[User: ${currentUserId}] Polling for chat ${chatId} with lastTimestamp: ${lastTimestamp}`
 			);
 
 			try {
 				const response = await fetch(
-					// 'chatId' використовується тут
 					`/api/chat/${chatId}/messages/poll?lastMessageTimestamp=${encodeURIComponent(
 						lastTimestamp
 					)}`,
-					{
-						cache: 'no-store',
-						signal: controller.signal,
-					}
+					{ cache: 'no-store' }
 				);
 
-				if (!isActive) return;
-
 				if (!response.ok) {
-					// 'otherParticipant?.name' використовується в console.error
 					console.error(
-						`[${otherParticipant?.name || 'Other'}] Polling error:`,
+						`[User: ${currentUserId}] Polling error for chat ${chatId}:`,
 						response.status,
 						response.statusText
 					);
 					await new Promise((resolve) => setTimeout(resolve, 10000));
 				} else {
 					const data = (await response.json()) as PollResponse;
-					if (!isActive) return;
-
 					if (data.messages && data.messages.length > 0) {
-						// 'otherParticipant?.name' використовується в console.log
 						console.log(
-							`[${otherParticipant?.name || 'Other'}] Polled new messages:`,
+							`[User: ${currentUserId}] Polled new messages for chat ${chatId}:`,
 							data.messages
 						);
 						setMessages((prevMessages) => {
@@ -132,57 +117,61 @@ export default function ChatInterface({
 					}
 				}
 			} catch (error: unknown) {
-				if (!isActive) return;
-				if (error instanceof Error) {
-					if (error.name === 'AbortError') {
-						// 'otherParticipant?.name' використовується в console.log
-						console.log(
-							`[${
-								otherParticipant?.name || 'Other'
-							}] Fetch aborted for polling.`
-						);
-					} else {
-						// 'otherParticipant?.name' використовується в console.error
-						console.error(
-							`[${
-								otherParticipant?.name || 'Other'
-							}] Failed to fetch new messages (catch):`,
-							error.message
-						);
-					}
+				if (error instanceof Error && error.name === 'AbortError') {
+					console.log(
+						`[User: ${currentUserId}] Fetch aborted for polling chat ${chatId}.`
+					);
 				} else {
-					// 'otherParticipant?.name' використовується в console.error
 					console.error(
-						`[${
-							otherParticipant?.name || 'Other'
-						}] An unknown error occurred during polling:`,
+						`[User: ${currentUserId}] Failed to fetch new messages for chat ${chatId} (catch):`,
 						error
 					);
-				}
-				if (!(error instanceof Error && error.name === 'AbortError')) {
 					await new Promise((resolve) => setTimeout(resolve, 10000));
 				}
 			} finally {
-				if (isActive) {
-					setIsLoading(false);
-					setTimeout(startPolling, 2000);
-				}
+				setIsLoading(false);
+			}
+		};
+		// Залежності для оновлення pollingFunctionRef:
+	}, [chatId, messages, isLoading, currentUserId, otherParticipant]); // otherParticipant тут, якщо він використовується для логування всередині
+
+	// useEffect для запуску та рекурсивного виклику polling
+	useEffect(() => {
+		let isActive = true;
+		let timeoutId: NodeJS.Timeout;
+
+		const executePoll = async () => {
+			if (!isActive) return;
+			if (pollingFunctionRef.current) {
+				await pollingFunctionRef.current();
+			}
+			if (isActive) {
+				timeoutId = setTimeout(executePoll, 2000); // Інтервал між запитами
 			}
 		};
 
 		if (chatId) {
-			// 'chatId' використовується тут
-			startPolling();
+			// Запускаємо polling тільки якщо є chatId
+			const initialPollTimeoutId = setTimeout(() => {
+				if (isActive) executePoll();
+			}, 500); // Невеликий таймаут перед першим запуском
+			return () => {
+				clearTimeout(initialPollTimeoutId);
+				isActive = false;
+				clearTimeout(timeoutId);
+				console.log(
+					`[User: ${currentUserId}] Polling stopped for chat ${chatId}.`
+				); // Оновлено лог
+			};
 		}
 
 		return () => {
+			// Функція очищення, якщо chatId не було
 			isActive = false;
-			controller.abort();
-			// 'otherParticipant?.name' використовується в console.log
-			console.log(`[${otherParticipant?.name || 'Other'}] Polling stopped.`);
+			clearTimeout(timeoutId);
 		};
-		// Оновлений масив залежностей, що включає всі необхідні змінні
-	}, [chatId, isLoading, messages, currentUserId, otherParticipant]); // Змінено otherParticipant?.id та otherParticipant?.name на otherParticipant
+		// Змінено масив залежностей: тепер тільки chatId
+	}, [chatId, currentUserId]); // currentUserId додано для логування в cleanup
 
 	return (
 		<div className="chat-interface-wrapper">
