@@ -121,6 +121,11 @@ export async function sendMessage(
 	prevState: SendMessageFormState,
 	formData: FormData
 ): Promise<SendMessageFormState> {
+	console.log(
+		`--- sendMessage Server Action CALLED for chatId: ${chatId} at ${new Date().toISOString()} ---`
+	);
+	console.log('Form Data Content:', formData.get('content'));
+
 	const session = await auth();
 	if (!session?.user?.id) {
 		return { status: 'error', message: 'Nicht autorisiert.' };
@@ -207,6 +212,9 @@ export async function sendMessage(
 				image: createdMessage.author.image,
 			},
 		};
+		console.log(
+			`--- sendMessage Server Action SUCCESS for chatId: ${chatId} ---`
+		);
 
 		return {
 			status: 'success',
@@ -217,6 +225,9 @@ export async function sendMessage(
 		console.error('Fehler beim Senden der Nachricht:', error);
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unbekannter Fehler.';
+		console.log(
+			`--- sendMessage Server Action ERROR for chatId: ${chatId} ---`
+		);
 		return {
 			status: 'error',
 			message: `Fehler beim Senden der Nachricht: ${errorMessage}`,
