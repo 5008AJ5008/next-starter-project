@@ -3,25 +3,37 @@
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { redirect } from 'next/navigation';
-import { revalidatePath } from 'next/cache'; // Додаємо для оновлення сторінки чату
-import { z } from 'zod'; // Для валідації повідомлення
+import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
+// Імпорт Prisma з @prisma/client більше не потрібен для визначення MessageWithAuthor,
+// якщо ми визначаємо його поля явно.
+// import { Prisma } from '@prisma/client';
 
-/**
- * Знаходить існуючий чат між двома користувачами або створює новий,
- * а потім перенаправляє на сторінку чату.
- * @param receiverId ID користувача, з яким потрібно створити/знайти чат.
- */
+// Тип для автора, який буде включено в повідомлення
+interface MessageAuthor {
+	id: string;
+	name: string | null;
+	image: string | null;
+}
+
+// Тип для повідомлення, яке повертається клієнту
+interface ReturnedMessage {
+	id: string;
+	content: string;
+	createdAt: string; // Будемо повертати як ISO рядок
+	authorId: string;
+	chatId: string;
+	author: MessageAuthor;
+}
+
 export async function createOrFindChatAndRedirect(
 	receiverId: string
 ): Promise<void> {
 	const session = await auth();
-
 	if (!session?.user?.id) {
 		console.error('Nicht autorisiert für Chat-Erstellung.');
-		// У реальному додатку тут може бути redirect на сторінку входу або помилка
 		return;
 	}
-
 	const currentUserId = session.user.id;
 
 	if (currentUserId === receiverId) {
@@ -62,7 +74,6 @@ export async function createOrFindChatAndRedirect(
 		}
 	} catch (error) {
 		console.error('Fehler beim Erstellen oder Suchen des Chats:', error);
-		// Можна кинути помилку або перенаправити на сторінку помилки
 		return;
 	}
 
@@ -70,16 +81,14 @@ export async function createOrFindChatAndRedirect(
 		redirect(`/chat/${chatIdToRedirect}`);
 	} else {
 		console.error('Chat-ID wurde nicht gefunden oder erstellt.');
-		// redirect('/some-error-page');
 	}
 }
 
-// --- НОВА SERVER ACTION ДЛЯ НАДСИЛАННЯ ПОВІДОМЛЕННЯ ---
 const messageSchema = z.object({
 	content: z
 		.string()
 		.min(1, 'Nachricht darf nicht leer sein.')
-		.max(1000, 'Nachricht zu lang.'), // Повідомлення не може бути порожнім / Повідомлення задовге
+		.max(1000, 'Nachricht zu lang.'),
 });
 
 type SendMessageFormState = {
@@ -88,21 +97,36 @@ type SendMessageFormState = {
 	errors?: {
 		content?: string[];
 	};
+	newMessage?: ReturnedMessage;
 } | null;
 
+// Явно визначаємо тип MessageWithAuthor на основі моделі Message з schema.prisma
+// та того, що повертає include: { author: ... }
+interface MessageWithAuthor {
+	id: string;
+	content: string;
+	createdAt: Date; // Prisma DateTime - це Date в TypeScript
+	authorId: string;
+	chatId: string;
+	// Додаємо поле author зі своєю структурою
+	author: {
+		id: string;
+		name: string | null;
+		image: string | null;
+	};
+}
+
 export async function sendMessage(
-	chatId: string, // ID чату, до якого надсилається повідомлення
-	prevState: SendMessageFormState, // Попередній стан форми
+	chatId: string,
+	prevState: SendMessageFormState,
 	formData: FormData
 ): Promise<SendMessageFormState> {
 	const session = await auth();
-
 	if (!session?.user?.id) {
 		return { status: 'error', message: 'Nicht autorisiert.' };
 	}
 	const currentUserId = session.user.id;
 
-	// Валідація вхідних даних
 	const validatedFields = messageSchema.safeParse({
 		content: formData.get('content'),
 	});
@@ -114,56 +138,88 @@ export async function sendMessage(
 			errors: validatedFields.error.flatten().fieldErrors,
 		};
 	}
-
 	const { content } = validatedFields.data;
 
 	try {
-		// Перевірка, чи поточний користувач є учасником чату
 		const chatParticipant = await prisma.chatParticipant.findUnique({
 			where: {
 				userId_chatId: {
-					// Використовуємо унікальний складений ключ
 					userId: currentUserId,
-					chatId: chatId,
+					chatId,
 				},
 			},
 		});
-
 		if (!chatParticipant) {
 			return {
 				status: 'error',
 				message: 'Sie sind kein Teilnehmer dieses Chats.',
-			}; // Ви не є учасником цього чату
+			};
 		}
 
-		// Створюємо нове повідомлення та оновлюємо updatedAt для чату в одній транзакції
+		let createdMessage: MessageWithAuthor | undefined;
+
 		await prisma.$transaction(async (tx) => {
-			await tx.message.create({
+			// Тип result тепер має відповідати MessageWithAuthor завдяки include
+			const result = await tx.message.create({
 				data: {
-					content: content,
-					chatId: chatId,
+					content,
+					chatId,
 					authorId: currentUserId,
 				},
+				include: {
+					author: {
+						select: { id: true, name: true, image: true },
+					},
+				},
 			});
+			createdMessage = result as MessageWithAuthor; // Можна додати явне приведення, якщо TS все ще не впевнений
 
 			await tx.chat.update({
 				where: { id: chatId },
-				data: {
-					updatedAt: new Date(), // Оновлюємо час останньої активності в чаті
-				},
+				data: { updatedAt: new Date() },
 			});
 		});
 
-		// Оновлюємо кеш для сторінки чату, щоб відобразити нове повідомлення
 		revalidatePath(`/chat/${chatId}`);
-		revalidatePath('/chat'); // Також оновлюємо список чатів, оскільки порядок міг змінитися
+		revalidatePath('/chat');
 
-		return { status: 'success', message: 'Nachricht gesendet!' }; // Повідомлення надіслано!
+		if (!createdMessage || !createdMessage.author) {
+			console.error(
+				'Nachricht konnte nicht erstellt werden oder Autor-Daten fehlen.',
+				createdMessage
+			);
+			return {
+				status: 'error',
+				message:
+					'Nachricht konnte nicht erstellt werden oder Autor-Daten fehlen.',
+			};
+		}
+
+		const returnedNewMessage: ReturnedMessage = {
+			id: createdMessage.id,
+			content: createdMessage.content,
+			createdAt: createdMessage.createdAt.toISOString(), // createdAt тут є Date
+			authorId: createdMessage.authorId,
+			chatId: createdMessage.chatId,
+			author: {
+				id: createdMessage.author.id,
+				name: createdMessage.author.name,
+				image: createdMessage.author.image,
+			},
+		};
+
+		return {
+			status: 'success',
+			message: 'Nachricht gesendet!',
+			newMessage: returnedNewMessage,
+		};
 	} catch (error) {
-		console.error('Fehler beim Senden der Nachricht:', error); // Помилка при надсиланні повідомлення
+		console.error('Fehler beim Senden der Nachricht:', error);
+		const errorMessage =
+			error instanceof Error ? error.message : 'Unbekannter Fehler.';
 		return {
 			status: 'error',
-			message: 'Interner Serverfehler beim Senden der Nachricht.',
-		}; // Внутрішня помилка сервера при надсиланні повідомлення
+			message: `Fehler beim Senden der Nachricht: ${errorMessage}`,
+		};
 	}
 }

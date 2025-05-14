@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import ChatMessageForm from './ChatMessageForm'; // Форма надсилання повідомлень
+import ChatMessageForm from './ChatMessageForm';
 
-// Локальні типи для зручності
 export interface Author {
 	id: string;
 	name: string | null;
@@ -14,13 +13,12 @@ export interface Author {
 export interface Message {
 	id: string;
 	content: string;
-	createdAt: string; // Зберігаємо як рядок, оскільки Date не серіалізується легко через props
+	createdAt: string;
 	authorId: string;
 	author: Author;
 	chatId: string;
 }
 
-// Тип для відповіді від API polling-у
 interface PollResponse {
 	messages: Message[];
 }
@@ -29,7 +27,7 @@ type ChatInterfaceProps = {
 	initialMessages: Message[];
 	chatId: string;
 	currentUserId: string;
-	otherParticipant: Author | null; // Додаємо інформацію про співрозмовника
+	otherParticipant: Author | null;
 };
 
 export default function ChatInterface({
@@ -39,7 +37,7 @@ export default function ChatInterface({
 	otherParticipant,
 }: ChatInterfaceProps) {
 	const [messages, setMessages] = useState<Message[]>(initialMessages);
-	const [isLoading, setIsLoading] = useState(false);
+	const [isLoading, setIsLoading] = useState(false); // Для Long Polling
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
 	const scrollToBottom = () => {
@@ -47,13 +45,27 @@ export default function ChatInterface({
 	};
 
 	useEffect(() => {
+		setMessages(initialMessages);
+		scrollToBottom();
+	}, [initialMessages]);
+
+	useEffect(() => {
 		scrollToBottom();
 	}, [messages]);
 
-	// Оновлена логіка для Long Polling
+	// Функція для додавання нового повідомлення, отриманого від ChatMessageForm
+	const handleNewMessageFromForm = (newMessage: Message) => {
+		setMessages((prevMessages) => {
+			if (!prevMessages.find((msg) => msg.id === newMessage.id)) {
+				return [...prevMessages, newMessage];
+			}
+			return prevMessages;
+		});
+	};
+
+	// Long Polling для отримання повідомлень від інших користувачів
 	useEffect(() => {
 		let isActive = true;
-
 		const startPolling = async () => {
 			if (!isActive || isLoading) return;
 			setIsLoading(true);
@@ -75,19 +87,21 @@ export default function ChatInterface({
 					console.error('Polling error:', response.status, response.statusText);
 					await new Promise((resolve) => setTimeout(resolve, 5000));
 				} else {
-					// Явно вказуємо тип для даних, отриманих з response.json()
-					const data = (await response.json()) as PollResponse; // <--- ЗМІНА ТУТ
+					const data = (await response.json()) as PollResponse;
 					if (!isActive) return;
 
 					if (data.messages && data.messages.length > 0) {
 						setMessages((prevMessages) => {
-							const newMessages = data.messages.filter(
+							const uniqueNewMessages = data.messages.filter(
 								(newMessage) =>
 									!prevMessages.some(
 										(existingMessage) => existingMessage.id === newMessage.id
 									)
 							);
-							return [...prevMessages, ...newMessages];
+							if (uniqueNewMessages.length > 0) {
+								return [...prevMessages, ...uniqueNewMessages];
+							}
+							return prevMessages;
 						});
 					}
 				}
@@ -98,102 +112,126 @@ export default function ChatInterface({
 			} finally {
 				if (isActive) {
 					setIsLoading(false);
-					setTimeout(startPolling, 500); // Рекурсивний виклик для продовження polling
+					setTimeout(startPolling, 1000);
 				}
 			}
 		};
 
-		startPolling();
+		if (chatId) {
+			startPolling();
+		}
 
 		return () => {
 			isActive = false;
 		};
-		// Додаємо messages до залежностей, щоб lastTimestamp оновлювався,
-		// але також потрібно обережно керувати isLoading, щоб уникнути зайвих запитів.
-		// Поточна логіка з isLoading має це обробляти.
 	}, [chatId, messages, isLoading]);
 
 	return (
-		<>
-			<header className="p-4 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
-				<div className="flex items-center space-x-3">
+		<div className="chat-interface-wrapper">
+			{' '}
+			{/* Ваш клас: display: flex; flex-direction: column; height: 100%; */}
+			<header className="chat-header">
+				{' '}
+				{/* Ваш клас: flex-shrink: 0; ... */}
+				<div className="chat-header-content">
+					{' '}
+					{/* Ваш клас: display: flex; align-items: center; ... */}
 					{otherParticipant?.image && (
 						<Image
 							src={otherParticipant.image}
 							alt={`Avatar von ${otherParticipant.name || 'Benutzer'}`}
 							width={40}
 							height={40}
-							className="rounded-full"
+							className="chat-header-avatar" // Ваш клас
+							style={{ objectFit: 'cover' }} // Додано для правильного масштабування
 						/>
 					)}
-					<h1 className="text-xl font-semibold">
+					<h1 className="chat-header-name">
+						{' '}
+						{/* Ваш клас */}
 						{otherParticipant?.name || 'Unbekannter Benutzer'}
 					</h1>
 				</div>
 			</header>
-
-			<div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-100">
+			<div className="chat-messages-list">
+				{' '}
+				{/* Ваш клас: flex-grow: 1; overflow-y: auto; padding: 1rem; ... */}
 				{messages.length === 0 && (
-					<p className="text-center text-gray-500">
+					<p className="chat-no-messages-text">
 						Noch keine Nachrichten in diesem Chat.
 					</p>
 				)}
 				{messages.map((message) => (
+					// Використовуємо ваші класи для контейнера повідомлення
 					<div
 						key={message.id}
-						className={`flex ${
+						className={`message-container ${
+							// Базовий клас
 							message.authorId === currentUserId
-								? 'justify-end'
-								: 'justify-start'
+								? 'my-message-container'
+								: 'other-message-container' // Для вирівнювання
 						}`}
 					>
+						{/* Аватар для чужих повідомлень */}
 						{message.authorId !== currentUserId && message.author.image && (
 							<Image
 								src={message.author.image}
 								alt={message.author.name || ''}
-								width={24}
+								width={24} // Розмір аватара в повідомленні
 								height={24}
-								className="rounded-full mr-2 self-end"
+								className="message-avatar message-avatar--other" // Ваші класи
+								style={{ objectFit: 'cover' }}
 							/>
 						)}
+						{/* Бульбашка повідомлення */}
 						<div
-							className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg shadow ${
+							className={`chat-message-bubble ${
+								// Базовий клас для бульбашки
 								message.authorId === currentUserId
-									? 'bg-blue-500 text-white'
-									: 'bg-white text-gray-800 border border-gray-200'
+									? 'my-message' // Клас для ваших повідомлень
+									: 'other-message' // Клас для чужих повідомлень
 							}`}
 						>
-							<p className="text-sm">{message.content}</p>
+							<p className="message-content">{message.content}</p>{' '}
+							{/* Ваш клас для тексту */}
 							<p
-								className={`text-xs mt-1 ${
+								className={`message-timestamp ${
 									message.authorId === currentUserId
-										? 'text-blue-100'
-										: 'text-gray-400'
-								} text-right`}
+										? 'message-timestamp--own'
+										: 'message-timestamp--other'
+								}`}
 							>
+								{' '}
+								{/* Ваші класи для часу */}
 								{new Date(message.createdAt).toLocaleTimeString('de-DE', {
 									hour: '2-digit',
 									minute: '2-digit',
 								})}
 							</p>
 						</div>
+						{/* Аватар для ваших повідомлень */}
 						{message.authorId === currentUserId && message.author.image && (
 							<Image
 								src={message.author.image}
 								alt={message.author.name || ''}
-								width={24}
+								width={24} // Розмір аватара в повідомленні
 								height={24}
-								className="rounded-full ml-2 self-end"
+								className="message-avatar message-avatar--own" // Ваші класи
+								style={{ objectFit: 'cover' }}
 							/>
 						)}
 					</div>
 				))}
 				<div ref={messagesEndRef} />
 			</div>
-
-			<div className="p-4 border-t border-gray-200 bg-white sticky bottom-0">
-				<ChatMessageForm chatId={chatId} />
+			<div className="chat-form-container">
+				{' '}
+				{/* Ваш клас: flex-shrink: 0; ... */}
+				<ChatMessageForm
+					chatId={chatId}
+					onMessageSent={handleNewMessageFromForm}
+				/>
 			</div>
-		</>
+		</div>
 	);
 }

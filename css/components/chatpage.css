@@ -33,9 +33,41 @@
 }
 /* Стилі для часу та аватара, якщо потрібно */
 .chat-page-container {
-	display: flex; /* Дозволяє ChatInterface зайняти всю висоту */
+	display: flex; /* Дозволяє дочірньому .chat-interface-wrapper розтягнутися */
 	flex-direction: column;
-	height: calc(100vh - 64px); /* Припускаючи, що висота хедера 64px */
-	/* Можна додати padding, якщо потрібно */
-	/* padding: 0 1rem; */
+	flex-grow: 1; /* Займає весь доступний простір у батьківському flex-контейнері (наприклад, #__next) */
+	/* min-height: calc(100vh - ВИСОТА_ВАШОГО_ОСНОВНОГО_ХЕДЕРА_САЙТУ); */
+	/* Якщо хедер сайту не є частиною цього flex-потоку,
+     тоді min-height: 100% може бути достатньо, якщо батько має висоту.
+     Або, якщо chat-page-container є прямим нащадком #__next,
+     то flex-grow: 1; має спрацювати. */
+	overflow: hidden; /* Запобігає прокрутці всієї сторінки, якщо чат завеликий */
+}
+
+/* Обгортка для ChatInterface (основний div всередині ChatInterface.tsx) */
+.chat-interface-wrapper {
+	display: flex;
+	flex-direction: column;
+	height: 100%; /* Займає всю висоту батьківського .chat-page-container */
+	width: 100%;
+}
+
+/* Хедер чату (всередині ChatInterface) */
+.chat-header {
+	flex-shrink: 0; /* Щоб хедер не стискався, якщо вмісту багато */
+	/* Ваші стилі: padding, border-bottom, background-color, position: sticky, top: 0, z-index */
+}
+
+/* Список повідомлень (всередині ChatInterface) */
+.chat-messages-list {
+	flex-grow: 1; /* Найважливіше: змушує цей блок зайняти весь доступний вертикальний простір */
+	overflow-y: auto; /* Додає прокрутку, якщо повідомлень багато */
+	padding: 1rem; /* Приклад відступів */
+	/* Ваші стилі для фону тощо */
+}
+
+/* Контейнер форми надсилання (всередині ChatInterface) */
+.chat-form-container {
+	flex-shrink: 0; /* Щоб форма не стискалася */
+	/* Ваші стилі: padding, border-top, background-color, position: sticky, bottom: 0 */
 }

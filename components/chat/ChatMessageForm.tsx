@@ -1,14 +1,28 @@
 'use client';
 
-import { useFormStatus } from 'react-dom'; // Для React 19+
+import { useFormStatus } from 'react-dom';
 import { useActionState } from 'react';
-// Для React 18: import { useFormState, useFormStatus } from 'react-dom';
-import { sendMessage } from '@/actions/chatActions'; // Імпортуємо Server Action
+import { sendMessage } from '@/actions/chatActions';
 import { useEffect, useRef } from 'react';
+// 1. Імпортуємо тип Message з ChatInterface (переконайтеся, що він експортований)
+import type { Message } from './ChatInterface';
 
 type ChatMessageFormProps = {
 	chatId: string;
+	// 2. Розкоментовуємо та використовуємо onMessageSent
+	onMessageSent: (newMessage: Message) => void;
 };
+
+// Тип для стану форми, що повертається з sendMessage
+type SendMessageFormState = {
+	status: 'success' | 'error';
+	message?: string;
+	errors?: {
+		content?: string[];
+	};
+	// 3. Розкоментовуємо newMessage і використовуємо тип Message
+	newMessage?: Message;
+} | null;
 
 function SubmitButton() {
 	const { pending } = useFormStatus();
@@ -16,51 +30,58 @@ function SubmitButton() {
 		<button
 			type="submit"
 			disabled={pending}
-			className="px-4 py-2 bg-blue-500 text-white rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+			className="chat-form-submit-button" // Використовуйте ваші CSS класи
 		>
-			{pending ? 'Senden...' : 'Senden'} {/* Надсилання... / Надіслати */}
+			{pending ? 'Senden...' : 'Senden'}
 		</button>
 	);
 }
 
-export default function ChatMessageForm({ chatId }: ChatMessageFormProps) {
-	// Прив'язуємо chatId до Server Action sendMessage
+export default function ChatMessageForm({
+	chatId,
+	onMessageSent,
+}: ChatMessageFormProps) {
 	const sendMessageWithChatId = sendMessage.bind(null, chatId);
-	const [formState, formAction] = useActionState(sendMessageWithChatId, null);
+	const [formState, formAction] = useActionState<
+		SendMessageFormState,
+		FormData
+	>(sendMessageWithChatId, null);
 
-	const formRef = useRef<HTMLFormElement>(null); // Ref для доступу до форми
-	const inputRef = useRef<HTMLInputElement>(null); // Ref для доступу до поля вводу
+	const formRef = useRef<HTMLFormElement>(null);
+	const inputRef = useRef<HTMLInputElement>(null);
 
-	// Очищуємо поле вводу після успішного надсилання
 	useEffect(() => {
 		if (formState?.status === 'success') {
-			formRef.current?.reset(); // Скидаємо форму
+			formRef.current?.reset(); // Скидаємо поля форми
 			inputRef.current?.focus(); // Повертаємо фокус на поле вводу
+			// 4. Якщо є нове повідомлення, викликаємо callback onMessageSent
+			if (formState.newMessage) {
+				onMessageSent(formState.newMessage);
+			}
 		}
-	}, [formState]);
+	}, [formState, onMessageSent]);
 
 	return (
-		<form ref={formRef} action={formAction} className="flex items-center">
+		<form ref={formRef} action={formAction} className="chat-message-form">
+			{' '}
+			{/* Використовуйте ваші CSS класи */}
 			<input
 				ref={inputRef}
 				type="text"
-				name="content" // Це ім'я має відповідати тому, що очікує messageSchema
-				placeholder="Nachricht eingeben..." // Введіть повідомлення...
+				name="content" // Це ім'я має відповідати тому, що очікує messageSchema в Server Action
+				placeholder="Nachricht eingeben..."
 				required
-				className="flex-grow p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+				className="chat-form-input" // Використовуйте ваші CSS класи
 				autoComplete="off"
 			/>
 			<SubmitButton />
-			{/* Можна відображати повідомлення про помилку валідації з formState?.errors?.content */}
 			{formState?.status === 'error' &&
 				formState.message &&
 				!formState.errors?.content && (
-					<p className="text-xs text-red-500 ml-2">{formState.message}</p>
+					<p className="chat-form-error-message">{formState.message}</p>
 				)}
 			{formState?.errors?.content && (
-				<p className="text-xs text-red-500 ml-2">
-					{formState.errors.content[0]}
-				</p>
+				<p className="chat-form-error-message">{formState.errors.content[0]}</p>
 			)}
 		</form>
 	);
