@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import ChatMessageForm from './ChatMessageForm';
 
@@ -54,15 +54,19 @@ export default function ChatInterface({
 	useEffect(() => {
 		scrollToBottom();
 	}, [messages]);
-
-	const handleNewMessageFromForm = (newMessage: Message) => {
+	/////////////////////////////
+	//////////////////////////////
+	// Обгортаємо handleNewMessageFromForm у useCallback
+	const handleNewMessageFromForm = useCallback((newMessage: Message) => {
 		setMessages((prevMessages) => {
+			// Перевіряємо, чи повідомлення вже існує, щоб уникнути дублікатів
+			// Це може бути важливо, якщо і Long Polling, і onMessageSent можуть додати те саме повідомлення
 			if (!prevMessages.find((msg) => msg.id === newMessage.id)) {
 				return [...prevMessages, newMessage];
 			}
 			return prevMessages;
 		});
-	};
+	}, []); // setMessages є стабільною функцією, тому масив залежностей порожній
 
 	// Оновлюємо pollingFunctionRef, коли змінюються залежності, які вона використовує
 	useEffect(() => {
