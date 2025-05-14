@@ -7,10 +7,9 @@ const POLLING_INTERVAL = 2000; // 2 секунди інтервал переві
 
 export async function GET(
 	request: Request,
-	// Тип для params тут також має бути об'єктом, Next.js обробляє Promise під капотом
-	// для аргументів функції обробника маршруту.
-	// Однак, доступ до його властивостей тепер асинхронний.
-	{ params: routeParams }: { params: { chatId: string } }
+	// --- ЗМІНА ТУТ: Оновлюємо тип для другого аргументу ---
+	// Тепер params очікується як Promise, що містить об'єкт з chatId
+	{ params: paramsPromise }: { params: Promise<{ chatId: string }> }
 ) {
 	const session = await auth();
 	if (!session?.user?.id) {
@@ -18,17 +17,10 @@ export async function GET(
 	}
 	const currentUserId = session.user.id;
 
-	// --- ЗМІНА ТУТ ---
-	// Очікуємо routeParams перед доступом до chatId, згідно з Next.js 15
-	// Хоча сам routeParams не є Promise, ця конструкція задовольняє нові вимоги
-	// або ж Next.js передає Promise, який розв'язується тут.
-	// Для API Routes, params зазвичай передається вже розв'язаним,
-	// але помилка вказує на необхідність await.
-	// Спробуємо так, як рекомендує повідомлення про помилку.
-	// Якщо `routeParams` не є Promise, `await` просто поверне його.
-	const awaitedParams = await routeParams;
-	const chatId = awaitedParams.chatId;
-	// ------------------
+	// Очікуємо розв'язання Promise, щоб отримати об'єкт параметрів
+	const params = await paramsPromise;
+	const chatId = params.chatId;
+	// ----------------------------------------------------
 
 	// Отримуємо мітку часу останнього відомого повідомлення з параметрів запиту
 	const { searchParams } = new URL(request.url);
@@ -42,7 +34,7 @@ export async function GET(
 		where: {
 			userId_chatId: {
 				userId: currentUserId,
-				chatId: chatId,
+				chatId,
 			},
 		},
 	});
@@ -57,7 +49,7 @@ export async function GET(
 	while (attempts < maxAttempts) {
 		const messages = await prisma.message.findMany({
 			where: {
-				chatId: chatId,
+				chatId,
 				createdAt: {
 					gt: lastMessageTimestamp,
 				},
