@@ -6,7 +6,7 @@ import Image from 'next/image';
 import SignIn from '@/components/Auth/SignIn';
 import Link from 'next/link';
 import UserFilters from '@/components/filters/UserFilters'; // Переконайтеся, що шлях правильний
-import { Prisma } from '@prisma/client';
+// import { Prisma } from '@prisma/client';
 
 export const metadata: Metadata = {
 	title: 'Next Starter', // Оновлений заголовок для головної
@@ -42,12 +42,10 @@ export default async function HomePage({
 	// Очікуємо searchParams, якщо вони є
 	const searchParams = searchParamsPromise ? await searchParamsPromise : {};
 
-	// Ініціалізуємо andConditions як порожній масив.
-	// TypeScript виведе тип як масив об'єктів, що відповідають умовам Prisma.
-	// Щоб уникнути помилок при додаванні різних ключів, можна типізувати як any[] або Record<string, any>[]
-	// але для Prisma краще дозволити вивести тип, якщо це можливо.
+	// Ініціалізуємо andConditions як any[], щоб уникнути локальних помилок TypeScript
+	// при додаванні об'єктів з різними ключами, та проблем з Vercel.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const andConditions: Record<string, any>[] = []; // Використовуємо any[] для гнучкості
+	const andConditions: any[] = [];
 
 	// Додаємо базові умови для image
 	andConditions.push({ image: { not: null } });
@@ -95,16 +93,16 @@ export default async function HomePage({
 		});
 	}
 
-	// Явно типізуємо whereClause
-	const whereClause: Prisma.UserWhereInput = {
+	// whereClause тепер також не має явної анотації типу Prisma.UserWhereInput
+	const whereClause = {
 		NOT: {
 			id: currentUserId || undefined,
 		},
-		AND: andConditions,
+		AND: andConditions.length > 0 ? andConditions : undefined, // Передаємо AND тільки якщо є умови
 	};
 
 	const users = await prisma.user.findMany({
-		where: whereClause,
+		where: whereClause, // Prisma Client має прийняти цей об'єкт, якщо він структурно правильний
 		select: {
 			id: true,
 			image: true,
