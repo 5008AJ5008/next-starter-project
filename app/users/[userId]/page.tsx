@@ -1,11 +1,13 @@
 import type { Metadata, ResolvingMetadata } from 'next';
 import prisma from '@/lib/prisma';
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { createOrFindChatAndRedirect } from '@/actions/chatActions';
 import BookmarkButton from '@/components/bookmarks/BookmarkButton'; // Переконайтеся, що шлях правильний
 import { isBookmarked } from '@/actions/bookmarkActions'; // Переконайтеся, що шлях правильний
+import LikeButton from '@/components/likes/LikeButton'; // Переконайтеся, що шлях правильний
+import { hasUserLiked } from '@/actions/likeActions'; // Переконайтеся, що шлях правильний
 
 // Допоміжна функція для розрахунку віку
 function calculateAge(birthDate: Date | null): number | null {
@@ -69,12 +71,22 @@ export default async function UserProfilePage({
 	const isAuthenticated = Boolean(session?.user);
 	const currentUserId = session?.user?.id;
 
+	// --- ОБМЕЖЕННЯ ДОСТУПУ ДЛЯ НЕАВТОРИЗОВАНИХ ---
+	if (!isAuthenticated) {
+		// Перенаправляємо на сторінку входу, зберігаючи поточний URL для повернення
+		const params = await paramsPromise; // Потрібно отримати userId для callbackUrl
+		const viewedUserId = params.userId;
+		redirect(`/api/auth/signin?callbackUrl=/users/${viewedUserId}`);
+	}
+	// ------------------------------------------
+
 	const user = await prisma.user.findUnique({
 		where: { id: userId },
 		select: {
 			id: true,
 			name: true,
-			email: isAuthenticated,
+			// email: isAuthenticated, // email вже буде доступний, оскільки isAuthenticated=true
+			email: true, // Можна просто завантажувати email, якщо користувач вже пройшов перевірку
 			image: true,
 			birthDate: true,
 			gender: true,
@@ -91,8 +103,11 @@ export default async function UserProfilePage({
 
 	// 2. Отримуємо початковий стан закладки
 	let initialIsBookmarked = false;
-	if (isAuthenticated && currentUserId && currentUserId !== userId) {
+	let initialIsLiked = false;
+
+	if (currentUserId && currentUserId !== userId) {
 		initialIsBookmarked = await isBookmarked(userId);
+		initialIsLiked = await hasUserLiked(userId); // Отримуємо стан лайка
 	}
 
 	const startChatAction = createOrFindChatAndRedirect.bind(null, user.id);
@@ -170,6 +185,16 @@ export default async function UserProfilePage({
 								currentUserId={currentUserId}
 							/>
 						)}
+						{/* 4. Додаємо LikeButton */}
+						{isAuthenticated && currentUserId !== userId && (
+							<LikeButton
+								likedUserId={userId}
+								initialIsLiked={initialIsLiked}
+								currentUserId={currentUserId}
+								// Передаємо callback, хоча його обробка має бути на клієнті
+								// Для серверного компонента ця функція не зможе викликати alert/redirect
+							/>
+						)}
 					</div>
 
 					{(user.city || user.gender) && (
@@ -191,28 +216,27 @@ export default async function UserProfilePage({
 						</div>
 					)}
 
-					{isAuthenticated &&
-						currentUserId !== user.id && ( // Показуємо тільки якщо авторизований І це не власний профіль
-							<div className="mt-6 pt-4 border-t border-gray-200">
+					{currentUserId !== user.id && ( // Показуємо тільки якщо авторизований І це не власний профіль
+						<div className="mt-6 pt-4 border-t border-gray-200">
+							{' '}
+							{/* Приклад Tailwind, замініть на ваші класи */}
+							<form action={startChatAction}>
 								{' '}
-								{/* Приклад Tailwind, замініть на ваші класи */}
-								<form action={startChatAction}>
-									{' '}
-									{/* Викликаємо Server Action */}
-									<button
-										type="submit"
-										// Додайте ваші класи для кнопки
-										className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-									>
-										Nachricht senden
-									</button>
-								</form>
-								{/* Можна залишити кнопку Like окремо, якщо її логіка інша і вона не є Server Action */}
-								{/* <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mr-2">
+								{/* Викликаємо Server Action */}
+								<button
+									type="submit"
+									// Додайте ваші класи для кнопки
+									className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+								>
+									Nachricht senden
+								</button>
+							</form>
+							{/* Можна залишити кнопку Like окремо, якщо її логіка інша і вона не є Server Action */}
+							{/* <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mr-2">
                 Like
               </button> */}
-							</div>
-						)}
+						</div>
+					)}
 				</div>
 			</div>
 		</main>
