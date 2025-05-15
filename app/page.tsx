@@ -42,10 +42,11 @@ export default async function HomePage({
 	// Очікуємо searchParams, якщо вони є
 	const searchParams = searchParamsPromise ? await searchParamsPromise : {};
 
-	// Формуємо масив умов для AND
+	// 2. Явно типізуємо andConditions як Prisma.UserWhereInput[]
 	const andConditions: Prisma.UserWhereInput[] = [
-		{ image: { not: null } }, // Зображення не повинно бути null
-		{ image: { not: '' } }, // Зображення не повинно бути порожнім рядком
+		// Умови для image тепер є частиною загального AND, а не окремим ключем
+		{ image: { not: null } },
+		{ image: { not: '' } },
 	];
 
 	if (searchParams?.city) {
@@ -90,12 +91,11 @@ export default async function HomePage({
 		});
 	}
 
-	// Основний об'єкт whereClause
 	const whereClause: Prisma.UserWhereInput = {
+		// Тип для whereClause також вказано
 		NOT: {
 			id: currentUserId || undefined,
 		},
-		// Всі інші умови об'єднуються через AND
 		AND: andConditions,
 	};
 
