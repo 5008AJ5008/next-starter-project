@@ -15,9 +15,10 @@ export interface Message {
 	id: string;
 	content: string;
 	createdAt: string; // Зберігаємо як рядок
-	authorId: string;
-	author: Author;
+	authorId: string | null; // <--- ВАЖЛИВО: має бути string | null
+	author: Author | null; // <--- ВАЖЛИВО: має бути Author | null
 	chatId: string;
+	isSystemMessage?: boolean | null;
 }
 
 interface PollResponse {
@@ -225,58 +226,73 @@ export default function ChatInterface({
 						Noch keine Nachrichten in diesem Chat.
 					</p>
 				)}
-				{messages.map((message) => (
-					<div
-						key={message.id}
-						className={`message-row ${
-							message.authorId === currentUserId
-								? 'message-row--own'
-								: 'message-row--other'
-						}`}
-					>
-						{message.authorId !== currentUserId && message.author.image && (
-							<Image
-								src={message.author.image}
-								alt={message.author.name || ''}
-								width={24}
-								height={24}
-								className="message-avatar message-avatar--other"
-								style={{ objectFit: 'cover' }}
-							/>
-						)}
+				{messages.map((message) => {
+					const isOwnMessage = message.authorId === currentUserId;
+					// Безпечний доступ до властивостей автора
+					const authorName = message.author?.name || 'System';
+					const authorImage = message.author?.image;
+
+					if (message.isSystemMessage) {
+						return (
+							<div key={message.id} className="message-row message-row--system">
+								<p className="message-bubble message-bubble--system">
+									{message.content}
+								</p>
+							</div>
+						);
+					}
+
+					return (
 						<div
-							className={`message-bubble ${
-								message.authorId === currentUserId
-									? 'message-bubble--own'
-									: 'message-bubble--other'
+							key={message.id}
+							className={`message-row ${
+								isOwnMessage ? 'message-row--own' : 'message-row--other'
 							}`}
 						>
-							<p className="message-content">{message.content}</p>
-							<p
-								className={`message-timestamp ${
-									message.authorId === currentUserId
-										? 'message-timestamp--own'
-										: 'message-timestamp--other'
+							{/* Перевіряємо authorImage перед використанням */}
+							{!isOwnMessage && authorImage && (
+								<Image
+									src={authorImage}
+									alt={authorName}
+									width={24}
+									height={24}
+									className="message-avatar message-avatar--other"
+									style={{ objectFit: 'cover' }}
+								/>
+							)}
+							<div
+								className={`message-bubble ${
+									isOwnMessage ? 'message-bubble--own' : 'message-bubble--other'
 								}`}
 							>
-								{new Date(message.createdAt).toLocaleTimeString('de-DE', {
-									hour: '2-digit',
-									minute: '2-digit',
-								})}
-							</p>
+								<p className="message-content">{message.content}</p>
+								<p
+									className={`message-timestamp ${
+										isOwnMessage
+											? 'message-timestamp--own'
+											: 'message-timestamp--other'
+									}`}
+								>
+									{new Date(message.createdAt).toLocaleTimeString('de-DE', {
+										hour: '2-digit',
+										minute: '2-digit',
+									})}
+								</p>
+							</div>
+							{/* Перевіряємо authorImage перед використанням */}
+							{isOwnMessage && authorImage && (
+								<Image
+									src={authorImage}
+									alt={authorName}
+									width={24}
+									height={24}
+									className="message-avatar message-avatar--own"
+									style={{ objectFit: 'cover' }}
+								/>
+							)}
 						</div>
-						{message.authorId === currentUserId && message.author.image && (
-							<Image
-								src={message.author.image}
-								alt={message.author.name || ''}
-								width={24}
-								height={24}
-								className="message-avatar message-avatar--own"
-								style={{ objectFit: 'cover' }}
-							/>
-						)}
-					</div>
-				))}
+					);
+				})}
 				<div ref={messagesEndRef} />
 			</div>
 
@@ -289,3 +305,5 @@ export default function ChatInterface({
 		</div>
 	);
 }
+//////////////////
+/////////////////

@@ -49,7 +49,7 @@ LikeButtonProps) {
 				if (typeof response.isLiked === 'boolean') {
 					setIsLiked(response.isLiked);
 				}
-				console.log(response.message);
+				// console.log(response.message);
 				// // Викликаємо callback, якщо він є, передаючи інформацію про метч та chatId
 				// if (onLikeToggle) {
 				// 	onLikeToggle(

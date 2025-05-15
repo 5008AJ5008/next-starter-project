@@ -63,7 +63,7 @@ export async function togglePhotoLike(
 					},
 				});
 				isCurrentlyLiked = false;
-				console.log(`Like von ${likerId} für ${likedUserId} entfernt.`);
+				// console.log(`Like von ${likerId} für ${likedUserId} entfernt.`);
 			} else {
 				// Якщо лайка немає, створюємо його
 				await tx.photoLike.create({
@@ -73,7 +73,7 @@ export async function togglePhotoLike(
 					},
 				});
 				isCurrentlyLiked = true;
-				console.log(`Like von ${likerId} für ${likedUserId} hinzugefügt.`);
+				// console.log(`Like von ${likerId} für ${likedUserId} hinzugefügt.`);
 
 				// Перевіряємо на взаємний лайк (метч)
 				const mutualLike = await tx.photoLike.findUnique({
