@@ -17,13 +17,14 @@ interface MessageAuthor {
 }
 
 // Тип для повідомлення, яке повертається клієнту
-interface ReturnedMessage {
+export interface ReturnedMessage {
 	id: string;
 	content: string;
 	createdAt: string; // Будемо повертати як ISO рядок
-	authorId: string;
+	authorId: string | null; // <--- ЗМІНА ТУТ: тепер string | null
 	chatId: string;
-	author: MessageAuthor;
+	author: MessageAuthor | null; // <--- ЗМІНА ТУТ: тепер MessageAuthor | null
+	isSystemMessage?: boolean | null; // Додаємо, щоб відповідати Message
 }
 
 export async function createOrFindChatAndRedirect(
@@ -105,15 +106,16 @@ type SendMessageFormState = {
 interface MessageWithAuthor {
 	id: string;
 	content: string;
-	createdAt: Date; // Prisma DateTime - це Date в TypeScript
-	authorId: string;
-	chatId: string;
-	// Додаємо поле author зі своєю структурою
+	createdAt: Date; // З schema.prisma: DateTime -> Date
+	authorId: string | null; // З schema.prisma: String?
+	chatId: string; // З schema.prisma: String
+	isSystemMessage: boolean | null; // З schema.prisma: Boolean?
 	author: {
+		// Відповідає include: { author: { select: { id, name, image } } }
 		id: string;
 		name: string | null;
 		image: string | null;
-	};
+	} | null; // author може бути null, якщо authorId є null (для системних повідомлень)
 }
 
 export async function sendMessage(
@@ -164,20 +166,21 @@ export async function sendMessage(
 		let createdMessage: MessageWithAuthor | undefined;
 
 		await prisma.$transaction(async (tx) => {
-			// Тип result тепер має відповідати MessageWithAuthor завдяки include
 			const result = await tx.message.create({
 				data: {
 					content,
 					chatId,
-					authorId: currentUserId,
+					authorId: currentUserId, // Завжди встановлюємо authorId
+					isSystemMessage: false, // Це не системне повідомлення
 				},
 				include: {
 					author: {
+						// Завжди включаємо автора
 						select: { id: true, name: true, image: true },
 					},
 				},
 			});
-			createdMessage = result as MessageWithAuthor; // Можна додати явне приведення, якщо TS все ще не впевнений
+			createdMessage = result as MessageWithAuthor; // Приведення типу
 
 			await tx.chat.update({
 				where: { id: chatId },
@@ -203,14 +206,11 @@ export async function sendMessage(
 		const returnedNewMessage: ReturnedMessage = {
 			id: createdMessage.id,
 			content: createdMessage.content,
-			createdAt: createdMessage.createdAt.toISOString(), // createdAt тут є Date
-			authorId: createdMessage.authorId,
+			createdAt: createdMessage.createdAt.toISOString(),
+			authorId: createdMessage.authorId, // Тут буде string, оскільки ми його встановили
 			chatId: createdMessage.chatId,
-			author: {
-				id: createdMessage.author.id,
-				name: createdMessage.author.name,
-				image: createdMessage.author.image,
-			},
+			author: createdMessage.author, // createdMessage.author тут не буде null
+			isSystemMessage: createdMessage.isSystemMessage ?? false,
 		};
 		// console.log(
 		// 	`--- sendMessage Server Action SUCCESS for chatId: ${chatId} ---`
@@ -329,5 +329,88 @@ export async function markChatAsRead(
 			success: false,
 			error: 'Fehler beim Aktualisieren des Lesestatus.',
 		};
+	}
+}
+
+const MESSAGES_PER_PAGE = 20;
+
+type GetOlderMessagesResponse = {
+	messages: ReturnedMessage[];
+	nextCursor?: string | null;
+	hasMore: boolean;
+};
+
+export async function getOlderMessages(
+	chatId: string,
+	cursor?: string | null
+): Promise<GetOlderMessagesResponse> {
+	const session = await auth();
+	if (!session?.user?.id) {
+		return { messages: [], hasMore: false };
+	}
+	const currentUserId = session.user.id;
+
+	const isParticipant = await prisma.chatParticipant.count({
+		where: { userId: currentUserId, chatId },
+	});
+
+	if (isParticipant === 0) {
+		return { messages: [], hasMore: false, nextCursor: null };
+	}
+
+	try {
+		const messagesFromDb = await prisma.message.findMany({
+			where: {
+				chatId,
+			},
+			take: MESSAGES_PER_PAGE + 1,
+			...(cursor && {
+				skip: 1,
+				cursor: {
+					id: cursor,
+				},
+			}),
+			orderBy: {
+				createdAt: 'desc',
+			},
+			include: {
+				author: {
+					select: { id: true, name: true, image: true },
+				},
+			},
+		});
+
+		const hasMore = messagesFromDb.length > MESSAGES_PER_PAGE;
+		const resultMessages = hasMore
+			? messagesFromDb.slice(0, MESSAGES_PER_PAGE)
+			: messagesFromDb;
+		const nextCursor =
+			resultMessages.length > 0
+				? resultMessages[resultMessages.length - 1].id
+				: null;
+
+		const formattedMessages: ReturnedMessage[] = resultMessages
+			.map((msg) => ({
+				id: msg.id,
+				content: msg.content,
+				createdAt: msg.createdAt.toISOString(),
+				authorId: msg.authorId,
+				// Перевіряємо, чи автор існує, особливо для системних повідомлень
+				author: msg.author
+					? {
+							id: msg.author.id,
+							name: msg.author.name,
+							image: msg.author.image,
+					  }
+					: null,
+				chatId: msg.chatId,
+				isSystemMessage: msg.isSystemMessage ?? false,
+			}))
+			.reverse();
+
+		return { messages: formattedMessages, nextCursor, hasMore };
+	} catch (error) {
+		console.error('Fehler beim Laden älterer Nachrichten:', error);
+		return { messages: [], hasMore: false };
 	}
 }
