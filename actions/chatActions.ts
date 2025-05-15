@@ -121,10 +121,10 @@ export async function sendMessage(
 	prevState: SendMessageFormState,
 	formData: FormData
 ): Promise<SendMessageFormState> {
-	console.log(
-		`--- sendMessage Server Action CALLED for chatId: ${chatId} at ${new Date().toISOString()} ---`
-	);
-	console.log('Form Data Content:', formData.get('content'));
+	// console.log(
+	// 	`--- sendMessage Server Action CALLED for chatId: ${chatId} at ${new Date().toISOString()} ---`
+	// );
+	// console.log('Form Data Content:', formData.get('content'));
 
 	const session = await auth();
 	if (!session?.user?.id) {
@@ -212,9 +212,9 @@ export async function sendMessage(
 				image: createdMessage.author.image,
 			},
 		};
-		console.log(
-			`--- sendMessage Server Action SUCCESS for chatId: ${chatId} ---`
-		);
+		// console.log(
+		// 	`--- sendMessage Server Action SUCCESS for chatId: ${chatId} ---`
+		// );
 
 		return {
 			status: 'success',
@@ -318,7 +318,7 @@ export async function markChatAsRead(
 		// Якщо у вас є інші сторінки, де відображається лічильник, їх теж потрібно ревалідувати.
 		// Або, що краще, ревалідувати сам компонент хедера, якщо це можливо (залежить від архітектури)
 		// Для простоти, поки що ревалідуємо головну.
-		console.log(`Chat ${chatId} marked as read for user ${currentUserId}`);
+		// console.log(`Chat ${chatId} marked as read for user ${currentUserId}`);
 		return { success: true };
 	} catch (error) {
 		console.error(

@@ -61,6 +61,10 @@ model User {
   chats        ChatParticipant[]
   // Повідомлення, надіслані цим користувачем
   sentMessages Message[]         @relation("SentMessages")
+
+  // Зв'язки для закладок
+  bookmarksMade Bookmark[] @relation("BookmarkedBy") // Закладки, які зробив цей користувач
+  bookmarkedFor Bookmark[] @relation("BookmarkedUser") // Закладки, де цього користувача додали
 }
 
 model VerificationToken {
@@ -116,4 +120,22 @@ model Message {
 
   // Можна додати статус (наприклад, "прочитано"), якщо потрібно
   // isRead Boolean @default(false)
+}
+
+// --- НОВА МОДЕЛЬ ДЛЯ ЗАКЛАДОК ---
+model Bookmark {
+  id String @id @default(cuid())
+
+  // Користувач, який зробив закладку
+  bookmarkerId String
+  bookmarker   User   @relation("BookmarkedBy", fields: [bookmarkerId], references: [id], onDelete: Cascade)
+
+  // Користувач, якого додали в закладки
+  bookmarkedUserId String
+  bookmarkedUser   User   @relation("BookmarkedUser", fields: [bookmarkedUserId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // Унікальна комбінація: один користувач може додати іншого в закладки тільки один раз
+  @@unique([bookmarkerId, bookmarkedUserId])
 }

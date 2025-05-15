@@ -51,7 +51,7 @@ export default function MainNavigation({
 	useEffect(() => {
 		// Перевіряємо, чи дійсно змінився pathname
 		if (prevPathnameRef.current !== pathname) {
-			console.log('Pathname changed, closing menus/modal if open.');
+			// console.log('Pathname changed, closing menus/modal if open.');
 			closeMenu(); // Закриваємо основне меню
 			if (isDeleteModalOpen) {
 				// Закриваємо модальне вікно, якщо воно було відкрите
@@ -69,7 +69,7 @@ export default function MainNavigation({
 	// Обробник для кнопки "Profil löschen"
 	const handleDeleteProfileClick = () => {
 		// --- ДІАГНОСТИЧНИЙ LOG ---
-		console.log('handleDeleteProfileClick wurde aufgerufen!');
+		// console.log('handleDeleteProfileClick wurde aufgerufen!');
 		// -------------------------
 		closeMenu(); // Закриваємо основне меню
 		setIsDeleteModalOpen(true); // Відкриваємо модальне вікно

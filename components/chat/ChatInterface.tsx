@@ -76,7 +76,7 @@ export default function ChatInterface({
 			// Ми не обробляємо результат тут, оскільки це фонова дія
 			markChatAsRead(chatId).then((response) => {
 				if (response.success) {
-					console.log(`Chat ${chatId} successfully marked as read on client.`);
+					// console.log(`Chat ${chatId} successfully marked as read on client.`);
 					// Тут можна було б ініціювати оновлення лічильника в хедері,
 					// але revalidatePath в Server Action має це зробити для наступних завантажень.
 				} else {
@@ -101,9 +101,9 @@ export default function ChatInterface({
 				currentMessages.length > 0
 					? currentMessages[currentMessages.length - 1].createdAt
 					: new Date(0).toISOString();
-			console.log(
-				`[User: ${currentUserId}] Polling for chat ${chatId} with lastTimestamp: ${lastTimestamp}`
-			);
+			// console.log(
+			// 	`[User: ${currentUserId}] Polling for chat ${chatId} with lastTimestamp: ${lastTimestamp}`
+			// );
 
 			try {
 				const response = await fetch(
@@ -123,10 +123,10 @@ export default function ChatInterface({
 				} else {
 					const data = (await response.json()) as PollResponse;
 					if (data.messages && data.messages.length > 0) {
-						console.log(
-							`[User: ${currentUserId}] Polled new messages for chat ${chatId}:`,
-							data.messages
-						);
+						// console.log(
+						// 	`[User: ${currentUserId}] Polled new messages for chat ${chatId}:`,
+						// 	data.messages
+						// );
 						setMessages((prevMessages) => {
 							const uniqueNewMessages = data.messages.filter(
 								(newMessagePolled) =>
@@ -185,9 +185,9 @@ export default function ChatInterface({
 				clearTimeout(initialPollTimeoutId);
 				isActive = false;
 				clearTimeout(timeoutId);
-				console.log(
-					`[User: ${currentUserId}] Polling stopped for chat ${chatId}.`
-				); // Оновлено лог
+				// console.log(
+				// 	`[User: ${currentUserId}] Polling stopped for chat ${chatId}.`
+				// ); // Оновлено лог
 			};
 		}
 

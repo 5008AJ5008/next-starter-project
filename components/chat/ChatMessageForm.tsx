@@ -55,16 +55,16 @@ export default function ChatMessageForm({
 	const [inputValue, setInputValue] = useState('');
 
 	useEffect(() => {
-		console.log('ChatMessageForm formState updated:', formState);
+		// console.log('ChatMessageForm formState updated:', formState);
 		if (formState?.status === 'success') {
 			setInputValue(''); // 2. Очищуємо стан inputValue після успішного надсилання
 			// formRef.current?.reset(); // Це може бути вже не потрібно, оскільки інпут контрольований
 			inputRef.current?.focus();
 			if (formState.newMessage) {
-				console.log(
-					'ChatMessageForm calling onMessageSent with:',
-					formState.newMessage
-				);
+				// console.log(
+				// 	'ChatMessageForm calling onMessageSent with:',
+				// 	formState.newMessage
+				// );
 				onMessageSent(formState.newMessage);
 			} else {
 				console.warn(

@@ -4,6 +4,8 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { auth } from '@/auth';
 import { createOrFindChatAndRedirect } from '@/actions/chatActions';
+import BookmarkButton from '@/components/bookmarks/BookmarkButton'; // Переконайтеся, що шлях правильний
+import { isBookmarked } from '@/actions/bookmarkActions'; // Переконайтеся, що шлях правильний
 
 // Допоміжна функція для розрахунку віку
 function calculateAge(birthDate: Date | null): number | null {
@@ -87,6 +89,12 @@ export default async function UserProfilePage({
 
 	const age = calculateAge(user.birthDate);
 
+	// 2. Отримуємо початковий стан закладки
+	let initialIsBookmarked = false;
+	if (isAuthenticated && currentUserId && currentUserId !== userId) {
+		initialIsBookmarked = await isBookmarked(userId);
+	}
+
 	const startChatAction = createOrFindChatAndRedirect.bind(null, user.id);
 
 	return (
@@ -148,11 +156,21 @@ export default async function UserProfilePage({
 
 				{/* Використовуємо CSS клас 'profile-content' або inline-стилі */}
 				<div className="profile-content" style={{ padding: '1.5rem' }}>
-					{/* Залишаємо Tailwind класи для тексту, або замінюємо на ваші CSS */}
-					<h1 className="text-3xl font-bold text-gray-800 mb-1">
-						{user.name || 'Unbekannter Benutzer'}
-						{age && <span className="text-2xl text-gray-600">, {age}</span>}
-					</h1>
+					<div className="name_and_bookmark">
+						{/* Залишаємо Tailwind класи для тексту, або замінюємо на ваші CSS */}
+						<h1 className="text-3xl font-bold text-gray-800 mb-1">
+							{user.name || 'Unbekannter Benutzer'}
+							{age && <span className="text-2xl text-gray-600">, {age}</span>}
+						</h1>
+						{/* 3. Додаємо BookmarkButton */}
+						{isAuthenticated && currentUserId !== userId && (
+							<BookmarkButton
+								bookmarkedUserId={userId}
+								initialIsBookmarked={initialIsBookmarked}
+								currentUserId={currentUserId}
+							/>
+						)}
+					</div>
 
 					{(user.city || user.gender) && (
 						<p className="text-md text-gray-600 mb-4">
