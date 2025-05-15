@@ -3,10 +3,20 @@
 import { useToggle } from '@/hooks/useToggle';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
-import { CgCloseO, CgMenuRound, CgMail, CgMailOpen } from 'react-icons/cg'; // CgMail - для звичайного стану, CgMailOpen - для непрочитаних
+import { useEffect, useState, useRef } from 'react';
+import {
+	CgCloseO,
+	CgMenuRound,
+	CgMail,
+	CgMailOpen,
+	CgTrash,
+} from 'react-icons/cg'; // CgMail - для звичайного стану, CgMailOpen - для непрочитаних
 import { signOut } from 'next-auth/react';
 import Image from 'next/image';
+// Пізніше ми створимо та імпортуємо компонент модального вікна
+import DeleteProfileModal from '@/components/Auth/DeleteProfileModal';
+// Також потрібна буде Server Action для видалення
+import { deleteCurrentUserAccount } from '@/actions/profileActions'; // Приклад шляху
 ///////////////////////////////////////
 type LinkTarget = {
 	text: string;
@@ -15,6 +25,7 @@ type LinkTarget = {
 	isPublicOnly?: boolean;
 	action?: () => void;
 	isButton?: boolean;
+	// isDestructive?: boolean; // Для стилізації "небезпечних" дій
 };
 
 type Props = {
@@ -31,9 +42,70 @@ export default function MainNavigation({
 	unreadMessageCount = 0, // 2. Приймаємо unreadMessageCount, встановлюємо значення за замовчуванням
 }: Props) {
 	const [isOpen, toggleMenu, , , closeMenu] = useToggle(false);
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
 	const pathname = usePathname();
+	const prevPathnameRef = useRef(pathname); // Для відстеження зміни pathname
 
-	useEffect(() => closeMenu(), [pathname, closeMenu]);
+	// useEffect для закриття меню та модального вікна при зміні шляху
+	useEffect(() => {
+		// Перевіряємо, чи дійсно змінився pathname
+		if (prevPathnameRef.current !== pathname) {
+			console.log('Pathname changed, closing menus/modal if open.');
+			closeMenu(); // Закриваємо основне меню
+			if (isDeleteModalOpen) {
+				// Закриваємо модальне вікно, якщо воно було відкрите
+				setIsDeleteModalOpen(false);
+			}
+			prevPathnameRef.current = pathname; // Оновлюємо попередній pathname
+		}
+		// Додаємо isDeleteModalOpen та setIsDeleteModalOpen до залежностей,
+		// оскільки вони використовуються всередині.
+		// Функція setIsDeleteModalOpen стабільна.
+		// Ефект спрацює при зміні isDeleteModalOpen, але if (prevPathnameRef.current !== pathname)
+		// запобігатиме закриттю модального вікна, якщо шлях не змінився.
+	}, [pathname, closeMenu, isDeleteModalOpen, setIsDeleteModalOpen]);
+
+	// Обробник для кнопки "Profil löschen"
+	const handleDeleteProfileClick = () => {
+		// --- ДІАГНОСТИЧНИЙ LOG ---
+		console.log('handleDeleteProfileClick wurde aufgerufen!');
+		// -------------------------
+		closeMenu(); // Закриваємо основне меню
+		setIsDeleteModalOpen(true); // Відкриваємо модальне вікно
+	};
+
+	// Функція, яка буде викликана з модального вікна для підтвердження видалення
+	const confirmDeleteProfile = async () => {
+		setIsDeleting(true); // Починаємо процес видалення
+		console.log(
+			'Видалення профілю підтверджено - тут буде виклик Server Action'
+		);
+		try {
+			const result = await deleteCurrentUserAccount();
+			if (result.success) {
+				await signOut({ callbackUrl: '/' }); // Вихід після успішного видалення
+			} else {
+				alert(result.error || 'Fehler beim Löschen des Profils.');
+			}
+		} catch (error) {
+			console.error('Fehler im confirmDeleteProfile:', error);
+			alert('Ein unerwarteter Fehler ist aufgetreten.');
+		} finally {
+			setIsDeleting(false); // Завершуємо процес видалення
+			setIsDeleteModalOpen(false); // Закриваємо модальне вікно
+		}
+		// Тут буде виклик Server Action:
+		// setIsDeleting(false); // Завершуємо процес видалення
+		// setIsDeleteModalOpen(false); // Закриваємо модальне вікно
+		// Тимчасово просто вихід для демонстрації, якщо потрібно перевірити signOut
+		// await signOut({ callbackUrl: '/' });
+	};
+
+	// Оновлюємо список посилань, видаляючи "Profil bearbeiten" та "Abmelden",
+	// оскільки вони будуть у меню користувача (якщо ви реалізуєте окреме меню користувача)
+	// Або, якщо меню користувача немає, то "Profil bearbeiten" залишається тут.
+	// Кнопка "Abmelden" вже є окремо в кінці списку.
 
 	// Оновлюємо список посилань, додаючи нові пункти
 	const linkTargets: LinkTarget[] = [
@@ -67,85 +139,117 @@ export default function MainNavigation({
 
 	const hasUnreadMessages = unreadMessageCount > 0;
 
+	// --- ДІАГНОСТИЧНИЙ LOG ---
+	// console.log('MainNavigation RENDER, isDeleteModalOpen:', isDeleteModalOpen);
+	// -------------------------
+
 	return (
-		// Додаємо flex-контейнер для розміщення логотипу зліва та решти справа
-		<nav className="main-navigation">
-			{/* Логотип (посилання на головну) */}
-			<Link href="/" className="main-navigation__logo" onClick={closeMenu}>
-				{/* Замініть "Logo" на ваш <Image /> компонент або SVG */}
-				Badoo-Clone
-			</Link>
+		<>
+			<nav className="main-navigation">
+				{/* Логотип (посилання на головну) */}
+				<Link href="/" className="main-navigation__logo" onClick={closeMenu}>
+					{/* Замініть "Logo" на ваш <Image /> компонент або SVG */}
+					Badoo-Clone
+				</Link>
 
-			<div className="user-info">
-				{' '}
-				{/* Контейнер для інформації про користувача та кнопки меню */}
-				{isLoggedIn && (
-					<Link
-						href="/chat"
-						className="unread-messages-button"
-						aria-label="Meine Chats"
-					>
-						{hasUnreadMessages ? (
-							<CgMailOpen size={22} className="text-blue-600" /> // Іконка для непрочитаних
-						) : (
-							<CgMail size={22} className="text-gray-600" /> // Стандартна іконка
-						)}
-						{hasUnreadMessages && (
-							<span className="absolute top-0 right-0 block h-4 w-4 transform -translate-y-1/2 translate-x-1/2 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-								{unreadMessageCount > 9 ? '9+' : unreadMessageCount}
-							</span>
-						)}
-					</Link>
-				)}
-				{/* Відображення імені та аватара, якщо користувач увійшов */}
-				{isLoggedIn && userImage && (
-					<Image
-						src={userImage}
-						alt={userName || 'Benutzeravatar'}
-						width={32}
-						height={32}
-						className="rounded-full mr-2 hidden sm:block" // Ховаємо на дуже маленьких екранах
-					/>
-				)}
-				{isLoggedIn && userName && (
-					<span className="mr-4 text-sm hidden md:inline">
-						Hallo, {userName}!
-					</span> // Ховаємо на маленьких екранах
-				)}
-				{isLoggedIn && (
-					<button
-						className="main-navigation__button" // Ваші стилі для кнопки меню
-						onClick={toggleMenu}
-						aria-expanded={isOpen}
-						aria-label="Hauptmenü"
-					>
-						Menü {isOpen ? <CgCloseO /> : <CgMenuRound />}
-					</button>
-				)}
-			</div>
-
-			{/* Випадаюче меню */}
-			{isOpen && (
-				<ul className="main-navigation__list">
+				<div className="user-info">
 					{' '}
-					{/* Позиціонування меню */}
-					{getMenuItems(linkTargets, pathname, isLoggedIn, closeMenu)}
+					{/* Контейнер для інформації про користувача та кнопки меню */}
 					{isLoggedIn && (
-						<li key="signout" className="border-t border-gray-200">
-							<button
-								className="main-navigation__link main-navigation__link--button w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" // Стилі для кнопки виходу
-								onClick={async () => {
-									await signOut({ callbackUrl: '/' });
-									closeMenu();
-								}}
-							>
-								Abmelden
-							</button>
-						</li>
+						<Link
+							href="/chat"
+							className="unread-messages-button"
+							aria-label="Meine Chats"
+						>
+							{hasUnreadMessages ? (
+								<CgMailOpen size={22} className="text-blue-600" /> // Іконка для непрочитаних
+							) : (
+								<CgMail size={22} className="text-gray-600" /> // Стандартна іконка
+							)}
+							{hasUnreadMessages && (
+								<span className="absolute top-0 right-0 block h-4 w-4 transform -translate-y-1/2 translate-x-1/2 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+									{unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+								</span>
+							)}
+						</Link>
 					)}
-				</ul>
+					{/* Відображення імені та аватара, якщо користувач увійшов */}
+					{isLoggedIn && userImage && (
+						<Image
+							src={userImage}
+							alt={userName || 'Benutzeravatar'}
+							width={32}
+							height={32}
+							className="rounded-full mr-2 hidden sm:block" // Ховаємо на дуже маленьких екранах
+						/>
+					)}
+					{isLoggedIn && userName && (
+						<span className="mr-4 text-sm hidden md:inline">
+							Hallo, {userName}!
+						</span> // Ховаємо на маленьких екранах
+					)}
+					{isLoggedIn && (
+						<button
+							className="main-navigation__button" // Ваші стилі для кнопки меню
+							onClick={toggleMenu}
+							aria-expanded={isOpen}
+							aria-label="Hauptmenü"
+						>
+							Menü {isOpen ? <CgCloseO /> : <CgMenuRound />}
+						</button>
+					)}
+				</div>
+
+				{/* Випадаюче меню */}
+				{isOpen && (
+					<ul className="main-navigation__list">
+						{' '}
+						{/* Позиціонування меню */}
+						{getMenuItems(
+							linkTargets,
+							pathname,
+							isLoggedIn,
+							closeMenu
+							// handleDeleteProfileClick
+						)}
+						{isLoggedIn && (
+							<>
+								<li key="signout" className="border-t border-gray-200">
+									<button
+										className="main-navigation__link main-navigation__link--button w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" // Стилі для кнопки виходу
+										onClick={async () => {
+											await signOut({ callbackUrl: '/' });
+											closeMenu();
+										}}
+									>
+										Abmelden
+									</button>
+								</li>
+								{/* Новий пункт "Profil löschen" */}
+								<li key="deleteprofile" className="border-t border-gray-200">
+									<button
+										className="main-navigation__link main-navigation__link--button w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center" // Стилі для небезпечної дії
+										onClick={handleDeleteProfileClick}
+									>
+										<CgTrash className="mr-2" />
+										Abmelden und Profil löschen
+									</button>
+								</li>
+							</>
+						)}
+					</ul>
+				)}
+			</nav>
+			{/* Перевіряємо значення isDeleteModalOpen перед рендерингом */}
+			{isDeleteModalOpen && (
+				<DeleteProfileModal
+					isOpen={isDeleteModalOpen} // Передаємо актуальний стан
+					onClose={() => setIsDeleteModalOpen(false)}
+					onConfirm={confirmDeleteProfile}
+					isDeleting={isDeleting}
+				/>
 			)}
-		</nav>
+		</>
 	);
 }
 
@@ -155,6 +259,7 @@ function getMenuItems(
 	pathname: string,
 	isLoggedIn: boolean,
 	closeMenu: () => void // Функція для закриття меню
+	// handleDeleteProfileClick: () => void // Додано, але не використовується в map нижче
 ) {
 	return linkTargets
 		.filter(({ isPrivate = false, isPublicOnly = false }) => {
