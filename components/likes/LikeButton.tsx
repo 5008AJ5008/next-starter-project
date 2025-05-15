@@ -5,6 +5,7 @@ import { useState, useTransition } from 'react';
 import { togglePhotoLike } from '@/actions/likeActions';
 // Іконки для лайків (наприклад, сердечка)
 import { FaHeart, FaRegHeart } from 'react-icons/fa'; // Або інші іконки на ваш вибір
+import type { MouseEvent as ReactMouseEvent } from 'react'; // Імпортуємо MouseEvent як ReactMouseEvent, щоб уникнути конфлікту імен, якщо потрібно
 
 type LikeButtonProps = {
 	likedUserId: string; // ID користувача, чий профіль/фото лайкають
@@ -27,7 +28,13 @@ LikeButtonProps) {
 		return null;
 	}
 
-	const handleToggleLike = async () => {
+	// Використовуємо React.MouseEvent<HTMLButtonElement> для типізації події
+	const handleToggleLike = async (
+		event: ReactMouseEvent<HTMLButtonElement>
+	) => {
+		event.stopPropagation(); // <--- ЗУПИНЯЄМО СПЛИВАННЯ ПОДІЇ
+		event.preventDefault(); // Додатково, щоб запобігти будь-якій стандартній дії кнопки, якщо вона всередині форми
+
 		startTransition(async () => {
 			const newIsLikedState = !isLiked;
 			// Оптимістичне оновлення UI
@@ -49,20 +56,7 @@ LikeButtonProps) {
 				if (typeof response.isLiked === 'boolean') {
 					setIsLiked(response.isLiked);
 				}
-				// console.log(response.message);
-				// // Викликаємо callback, якщо він є, передаючи інформацію про метч та chatId
-				// if (onLikeToggle) {
-				// 	onLikeToggle(
-				// 		response.isLiked ?? false,
-				// 		response.isMatch,
-				// 		response.chatId
-				// 	);
-				// }
-				// Логіка для onLikeToggle видалена звідси.
-				// Якщо потрібно реагувати на метч на клієнті (наприклад, показати alert або кнопку переходу до чату),
-				// Server Action togglePhotoLike може повертати isMatch та chatId,
-				// і цей компонент може оновити якийсь глобальний стан або показати тимчасове повідомлення.
-				// Наразі, системне повідомлення в чаті є основною реакцією на метч.
+
 				if (response.isMatch && response.chatId) {
 					// Тут можна, наприклад, показати сповіщення "Es ist ein Match!"
 					// Або навіть запропонувати перейти до чату.

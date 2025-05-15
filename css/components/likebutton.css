@@ -1,0 +1,7 @@
+.like-button-container-on-image {
+	/* Приклад назви класу */
+	position: absolute;
+	bottom: 0.5rem; /* аналог bottom-2 */
+	right: 0.5rem; /* аналог right-2 */
+	z-index: 10;
+}

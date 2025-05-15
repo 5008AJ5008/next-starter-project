@@ -152,7 +152,7 @@ export default function MainNavigation({
 					Badoo-Clone
 				</Link>
 
-				<div className="user-info">
+				<div className="user-actions-container">
 					{' '}
 					{/* Контейнер для інформації про користувача та кнопки меню */}
 					{isLoggedIn && (
@@ -175,18 +175,18 @@ export default function MainNavigation({
 					)}
 					{/* Відображення імені та аватара, якщо користувач увійшов */}
 					{isLoggedIn && userImage && (
-						<Image
-							src={userImage}
-							alt={userName || 'Benutzeravatar'}
-							width={32}
-							height={32}
-							className="rounded-full mr-2 hidden sm:block" // Ховаємо на дуже маленьких екранах
-						/>
+						<div className="avatar-container">
+							<Image
+								src={userImage}
+								alt={userName || 'Benutzeravatar'}
+								fill // Використовуємо fill
+								style={{ objectFit: 'cover' }} // Зберігає пропорції, обрізаючи зайве
+								sizes="32px" // Підказка для оптимізації
+							/>
+						</div>
 					)}
 					{isLoggedIn && userName && (
-						<span className="mr-4 text-sm hidden md:inline">
-							Hallo, {userName}!
-						</span> // Ховаємо на маленьких екранах
+						<span className="user-greeting">Hallo, {userName}!</span>
 					)}
 					{isLoggedIn && (
 						<button

@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 import { auth } from '@/auth'; // Функція для отримання сесії
 import prisma from '@/lib/prisma'; // Ваш Prisma Client
 import Image from 'next/image';
-// import Link from 'next/link'; // Для посилань на детальні профілі (в майбутньому для авторизованих)
 import SignIn from '@/components/Auth/SignIn';
 import Link from 'next/link';
 import UserFilters from '@/components/filters/UserFilters'; // Переконайтеся, що шлях правильний
-// import { Prisma } from '@prisma/client';
+import LikeButton from '@/components/likes/LikeButton'; // Переконайтеся, що шлях правильний
+import { hasUserLiked } from '@/actions/likeActions'; // Переконайтеся, що шлях правильний
 
 export const metadata: Metadata = {
 	title: 'Next Starter', // Оновлений заголовок для головної
@@ -116,6 +116,14 @@ export default async function HomePage({
 		take: 50,
 	});
 
+	// 2. Отримуємо стани лайків для всіх відображених користувачів (якщо поточний користувач авторизований)
+	const likedStates: Record<string, boolean> = {};
+	if (isAuthenticated && currentUserId) {
+		for (const user of users) {
+			likedStates[user.id] = await hasUserLiked(user.id);
+		}
+	}
+
 	return (
 		<main className="default-layout">
 			<div className="container mx-auto px-4 py-8">
@@ -179,6 +187,20 @@ export default async function HomePage({
 										<span className="text-gray-500">Kein Bild</span>
 									</div>
 								)}
+								{/* 3. Додаємо кнопку LikeButton поверх зображення (тільки для авторизованих) */}
+								{isAuthenticated &&
+									currentUserId &&
+									currentUserId !== user.id && (
+										<div className="like-button-container-on-image">
+											{' '}
+											{/* Позиціонування кнопки */}
+											<LikeButton
+												likedUserId={user.id}
+												initialIsLiked={likedStates[user.id] || false}
+												currentUserId={currentUserId}
+											/>
+										</div>
+									)}
 							</div>
 						);
 
@@ -214,3 +236,5 @@ export default async function HomePage({
 	);
 }
 ///////////////////////////////////
+////////////////////////////////////
+//////////////////////////////////

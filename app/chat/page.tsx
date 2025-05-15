@@ -17,9 +17,10 @@ export default async function ChatListPage() {
 		// Якщо користувач не авторизований, можна перенаправити на сторінку входу
 		// або показати повідомлення. Для простоти поки що просто повернемо null або повідомлення.
 		return (
-			<main className="container mx-auto px-4 py-8 text-center">
-				<p>Bitte melden Sie sich an, um Ihre Chats anzuzeigen.</p>{' '}
-				{/* Будь ласка, увійдіть, щоб переглянути свої чати. */}
+			<main className="chat-list-page chat-list-page--unauthenticated">
+				<p className="auth-prompt__message">
+					Bitte melden Sie sich an, um Ihre Chats anzuzeigen.
+				</p>
 			</main>
 		);
 	}
@@ -63,17 +64,17 @@ export default async function ChatListPage() {
 	});
 
 	return (
-		<main className="container mx-auto px-4 py-8">
-			<h1 className="text-3xl font-bold mb-8 text-center">Meine Chats</h1>
+		<main className="chat-list-page">
+			<h1 className="chat-list-page__title">Meine Chats</h1>
 
 			{userChats.length === 0 && (
-				<p className="text-center text-gray-500">
+				<p className="chat-list-page__empty-message">
 					Sie haben noch keine aktiven Chats.{' '}
 					{/* У вас ще немає активних чатів. */}
 				</p>
 			)}
 
-			<div className="space-y-4 max-w-2xl mx-auto">
+			<div className="chat-list">
 				{userChats.map((chat) => {
 					// Знаходимо іншого учасника чату (не поточного користувача)
 					const otherParticipant = chat.participants.find(
@@ -92,33 +93,47 @@ export default async function ChatListPage() {
 						<Link
 							href={`/chat/${chat.id}`} // Посилання на конкретний чат
 							key={chat.id}
-							className="block p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+							className="chat-item" // Новий клас для елемента списку чатів
 						>
-							<div className="flex items-center space-x-4">
-								<div className="flex-shrink-0">
+							<div className="chat-item__content">
+								{' '}
+								{/* Новий клас для вмісту елемента */}
+								<div className="chat-item__avatar-container">
+									{' '}
+									{/* Новий клас для контейнера аватара */}
 									{otherParticipant.image ? (
 										<Image
 											src={otherParticipant.image}
 											alt={`Avatar von ${otherParticipant.name || 'Benutzer'}`}
 											width={50}
 											height={50}
-											className="rounded-full"
+											className="chat-item__avatar" // Новий клас для аватара
 											style={{ objectFit: 'cover' }}
 										/>
 									) : (
-										<div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-											<span className="text-xl text-gray-500">
+										<div className="chat-item__avatar-placeholder">
+											{' '}
+											{/* Новий клас для заглушки аватара */}
+											<span className="avatar-placeholder__initials">
+												{' '}
+												{/* Новий клас для ініціалів */}
 												{otherParticipant.name?.charAt(0).toUpperCase() || '?'}
 											</span>
 										</div>
 									)}
 								</div>
-								<div className="flex-1 min-w-0">
-									<p className="text-lg font-semibold text-gray-800 truncate">
+								<div className="chat-item__details">
+									{' '}
+									{/* Новий клас для текстових деталей */}
+									<p className="chat-item__participant-name">
+										{' '}
+										{/* Новий клас для імені учасника */}
 										{otherParticipant.name || 'Unbekannter Benutzer'}
 									</p>
 									{lastMessage && (
-										<p className="text-sm text-gray-500 truncate">
+										<p className="chat-item__last-message">
+											{' '}
+											{/* Новий клас для останнього повідомлення */}
 											{/* Показуємо, хто надіслав останнє повідомлення */}
 											{lastMessage.authorId === currentUserId ? 'Du: ' : ''}
 											{lastMessage.content}
@@ -126,7 +141,9 @@ export default async function ChatListPage() {
 									)}
 								</div>
 								{lastMessage && (
-									<div className="text-xs text-gray-400 whitespace-nowrap">
+									<div className="chat-item__timestamp">
+										{' '}
+										{/* Новий клас для часу */}
 										{/* Тут можна буде додати форматування часу останнього повідомлення */}
 										{/* {formatDistanceToNow(new Date(lastMessage.createdAt), { addSuffix: true, locale: de })} */}
 										{new Date(lastMessage.createdAt).toLocaleTimeString(
