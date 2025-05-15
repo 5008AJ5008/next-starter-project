@@ -102,14 +102,18 @@ export default async function ChatPage({ params: paramsPromise }: Props) {
 		id: msg.id,
 		content: msg.content,
 		createdAt: msg.createdAt.toISOString(), // Важливо для серіалізації
-		authorId: msg.authorId,
-		author: {
-			// Переконуємося, що автор не null і має потрібні поля
-			id: msg.author.id,
-			name: msg.author.name,
-			image: msg.author.image,
-		},
+		authorId: msg.authorId, // Тепер може бути null
+		// --- ЗМІНА ТУТ: Додано перевірку на msg.author ---
+		author: msg.author
+			? {
+					// Якщо автор існує, передаємо його дані
+					id: msg.author.id,
+					name: msg.author.name,
+					image: msg.author.image,
+			  }
+			: null, // Інакше передаємо null
 		chatId: msg.chatId,
+		isSystemMessage: msg.isSystemMessage,
 	}));
 
 	const otherParticipantData = chatWithMessages.participants.find(
