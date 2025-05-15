@@ -1,0 +1,101 @@
+.user-filters-container {
+	position: relative; /* Для позиціонування випадаючого меню */
+	margin-bottom: 1rem; /* Відступ знизу */
+	display: flex; /* Можна додати, щоб кнопка була по центру або збоку */
+	justify-content: flex-start; /* Або center, flex-end */
+}
+
+.user-filters-button {
+	padding: 0.5rem 1rem;
+	background-color: #f0f0f0; /* Світло-сірий фон */
+	border: 1px solid #ccc;
+	border-radius: 0.375rem; /* rounded-md */
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	font-weight: 500;
+}
+.user-filters-button:hover {
+	background-color: #e0e0e0;
+}
+.user-filters-button svg {
+	/* Стиль для іконки всередині кнопки */
+	margin-right: 0.5rem;
+}
+
+.user-filters-dropdown {
+	position: absolute;
+	top: 100%; /* Розміщуємо під кнопкою */
+	left: 0; /* Або right: 0; або інші значення для вирівнювання */
+	background-color: white;
+	padding: 1rem;
+	border: 1px solid #ddd;
+	border-radius: 0.375rem;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	z-index: 10; /* Щоб було поверх інших елементів */
+	margin-top: 0.25rem; /* Невеликий відступ від кнопки */
+	width: 300px; /* Або інша ширина */
+	/* Додайте простір між елементами форми, якщо не використовуєте Tailwind space-y-4 */
+}
+.user-filters-dropdown form > div:not(:last-child) {
+	margin-bottom: 1rem;
+}
+.user-filters-dropdown .flex {
+	/* Для блоку з min/max віком */
+	display: flex;
+	gap: 0.5rem; /* space-x-2 */
+}
+.user-filters-dropdown .flex-1 {
+	flex: 1 1 0%;
+}
+.user-filters-dropdown label {
+	display: block;
+	font-size: 0.875rem; /* text-sm */
+	font-weight: 500; /* font-medium */
+	margin-bottom: 0.25rem;
+}
+.filter-input,
+.filter-select {
+	width: 100%;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid #ccc;
+	border-radius: 0.25rem;
+	box-sizing: border-box; /* Важливо */
+}
+.filter-input:focus,
+.filter-select:focus {
+	outline: none;
+	border-color: #3b82f6; /* Синій колір при фокусі */
+	box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+}
+
+.user-filters-dropdown .flex.justify-between {
+	/* Для кнопок "Застосувати" та "Скинути" */
+	display: flex;
+	justify-content: space-between;
+	margin-top: 1rem;
+}
+
+.filter-button-apply,
+.filter-button-reset {
+	padding: 0.5rem 1rem;
+	border-radius: 0.25rem;
+	cursor: pointer;
+	font-weight: 500;
+}
+.filter-button-apply {
+	background-color: #2563eb; /* Синій */
+	color: white;
+	border: 1px solid transparent;
+}
+.filter-button-apply:hover {
+	background-color: #1d4ed8;
+}
+.filter-button-reset {
+	background-color: #e5e7eb; /* Світло-сірий */
+	color: #374151;
+	border: 1px solid #d1d5db;
+}
+.filter-button-reset:hover {
+	background-color: #d1d5db;
+}
