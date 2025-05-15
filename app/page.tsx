@@ -42,8 +42,12 @@ export default async function HomePage({
 	// Очікуємо searchParams, якщо вони є
 	const searchParams = searchParamsPromise ? await searchParamsPromise : {};
 
-	// 2. Явно типізуємо andConditions як Prisma.UserWhereInput[]
-	const andConditions: Prisma.UserWhereInput[] = [];
+	// Ініціалізуємо andConditions як порожній масив.
+	// TypeScript виведе тип як масив об'єктів, що відповідають умовам Prisma.
+	// Щоб уникнути помилок при додаванні різних ключів, можна типізувати як any[] або Record<string, any>[]
+	// але для Prisma краще дозволити вивести тип, якщо це можливо.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const andConditions: Record<string, any>[] = []; // Використовуємо any[] для гнучкості
 
 	// Додаємо базові умови для image
 	andConditions.push({ image: { not: null } });
