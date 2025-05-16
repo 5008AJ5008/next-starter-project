@@ -1,16 +1,15 @@
-/* У вашому CSS файлі */
+/* Container für den Hauptinhalt des Benutzerprofils */
 .profile-container {
-	position: relative; /* Важливо для позиціонування дочірніх елементів, якщо потрібно */
-	max-width: 42rem; /* Обмеження ширини (еквівалент max-w-2xl) */
-	margin-left: auto; /* Центрування */
-	margin-right: auto; /* Центрування */
-	background-color: white; /* Якщо потрібно */
-	/* ... інші ваші стилі для цього контейнера ... */
+	position: relative;
+	max-width: 42rem;
+	margin-left: auto;
+	margin-right: auto;
+	background-color: white;
 }
 
+/* Container für das Profilbild */
 .profile-image-container {
-	position: relative; /* Це вже є в inline-стилі, але можна залишити для ясності */
+	position: relative;
 	width: 100%;
-	/* paddingTop: '75%'; -- це задається inline */
 	overflow: hidden;
 }

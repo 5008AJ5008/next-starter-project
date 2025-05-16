@@ -1,3 +1,4 @@
+/* Stile für das Overlay des Löschmodals (Hintergrundabdunklung) */
 .delete-modal-overlay {
 	position: fixed;
 	top: 0;
@@ -8,9 +9,10 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	z-index: 50; /* Має бути вище, ніж z-index хедера */
+	z-index: 50;
 }
 
+/* Stile für den Inhaltscontainer des Löschmodals */
 .delete-modal-content {
 	background-color: white;
 	padding: 20px;
@@ -21,25 +23,29 @@
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+/* Stile für den Titel des Löschmodals */
 .delete-modal-title {
 	margin-top: 0;
-	font-size: 1.25rem; /* Приклад */
+	font-size: 1.25rem;
 	font-weight: bold;
 }
 
+/* Stile für den Beschreibungstext im Löschmodal */
 .delete-modal-text {
 	margin-bottom: 20px;
 	font-size: 0.9rem;
 	color: #333;
 }
 
+/* Container für die Aktionsknöpfe (Abbrechen, Bestätigen) im Löschmodal */
 .delete-modal-actions {
 	margin-top: 20px;
 	display: flex;
-	justify-content: center; /* Або flex-end */
+	justify-content: center;
 	gap: 10px;
 }
 
+/* Allgemeine Stile für Knöpfe im Löschmodal */
 .delete-modal-button {
 	padding: 8px 16px;
 	border-radius: 4px;
@@ -47,8 +53,9 @@
 	font-weight: 500;
 }
 
+/* Spezifische Stile für den "Abbrechen"-Knopf */
 .delete-modal-button--cancel {
-	background-color: #e5e7eb; /* Світло-сірий */
+	background-color: #e5e7eb;
 	border: 1px solid #d1d5db;
 	color: #374151;
 }
@@ -56,8 +63,9 @@
 	background-color: #d1d5db;
 }
 
+/* Spezifische Stile für den "Bestätigen"-Knopf (Löschen) */
 .delete-modal-button--confirm {
-	background-color: #ef4444; /* Червоний */
+	background-color: #ef4444;
 	color: white;
 	border: none;
 }
@@ -65,6 +73,7 @@
 	background-color: #dc2626;
 }
 
+/* Stile für deaktivierte Knöpfe im Löschmodal */
 .delete-modal-button:disabled {
 	opacity: 0.5;
 	cursor: not-allowed;

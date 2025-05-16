@@ -10,14 +10,12 @@ import {
 	CgMail,
 	CgMailOpen,
 	CgTrash,
-} from 'react-icons/cg'; // CgMail - для звичайного стану, CgMailOpen - для непрочитаних
+} from 'react-icons/cg';
 import { signOut } from 'next-auth/react';
 import Image from 'next/image';
-// Пізніше ми створимо та імпортуємо компонент модального вікна
 import DeleteProfileModal from '@/components/Auth/DeleteProfileModal';
-// Також потрібна буде Server Action для видалення
-import { deleteCurrentUserAccount } from '@/actions/profileActions'; // Приклад шляху
-///////////////////////////////////////
+import { deleteCurrentUserAccount } from '@/actions/profileActions';
+
 type LinkTarget = {
 	text: string;
 	url: string;
@@ -25,66 +23,63 @@ type LinkTarget = {
 	isPublicOnly?: boolean;
 	action?: () => void;
 	isButton?: boolean;
-	// isDestructive?: boolean; // Для стилізації "небезпечних" дій
 };
 
 type Props = {
 	isLoggedIn: boolean;
 	userName?: string | null;
 	userImage?: string | null;
-	unreadMessageCount?: number; // Кількість непрочитаних повідомлень
+	unreadMessageCount?: number;
 };
 
+/**
+ * Stellt die Hauptnavigationsleiste der Anwendung dar.
+ * Beinhaltet das Logo, Navigationslinks, Benutzerinformationen (wenn angemeldet),
+ * eine Schaltfläche für ungelesene Nachrichten und ein Dropdown-Menü für weitere Aktionen
+ * wie Profilbearbeitung, Abmelden und Profillöschung (mit Bestätigungsmodal).
+ * @param {Props} props - Die Eigenschaften für die Komponente.
+ * @param {boolean} props.isLoggedIn - Zeigt an, ob der Benutzer angemeldet ist.
+ * @param {string | null} [props.userName] - Der Name des angemeldeten Benutzers.
+ * @param {string | null} [props.userImage] - Die URL zum Avatarbild des angemeldeten Benutzers.
+ * @param {number} [props.unreadMessageCount=0] - Die Anzahl der ungelesenen Nachrichten.
+ * @returns JSX-Element, das die Hauptnavigation anzeigt.
+ */
 export default function MainNavigation({
 	isLoggedIn,
 	userName,
 	userImage,
-	unreadMessageCount = 0, // 2. Приймаємо unreadMessageCount, встановлюємо значення за замовчуванням
+	unreadMessageCount = 0,
 }: Props) {
 	const [isOpen, toggleMenu, , , closeMenu] = useToggle(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const pathname = usePathname();
-	const prevPathnameRef = useRef(pathname); // Для відстеження зміни pathname
+	const prevPathnameRef = useRef(pathname);
 
-	// useEffect для закриття меню та модального вікна при зміні шляху
 	useEffect(() => {
-		// Перевіряємо, чи дійсно змінився pathname
 		if (prevPathnameRef.current !== pathname) {
-			// console.log('Pathname changed, closing menus/modal if open.');
-			closeMenu(); // Закриваємо основне меню
+			closeMenu();
 			if (isDeleteModalOpen) {
-				// Закриваємо модальне вікно, якщо воно було відкрите
 				setIsDeleteModalOpen(false);
 			}
-			prevPathnameRef.current = pathname; // Оновлюємо попередній pathname
+			prevPathnameRef.current = pathname;
 		}
-		// Додаємо isDeleteModalOpen та setIsDeleteModalOpen до залежностей,
-		// оскільки вони використовуються всередині.
-		// Функція setIsDeleteModalOpen стабільна.
-		// Ефект спрацює при зміні isDeleteModalOpen, але if (prevPathnameRef.current !== pathname)
-		// запобігатиме закриттю модального вікна, якщо шлях не змінився.
 	}, [pathname, closeMenu, isDeleteModalOpen, setIsDeleteModalOpen]);
 
-	// Обробник для кнопки "Profil löschen"
 	const handleDeleteProfileClick = () => {
-		// --- ДІАГНОСТИЧНИЙ LOG ---
-		// console.log('handleDeleteProfileClick wurde aufgerufen!');
-		// -------------------------
-		closeMenu(); // Закриваємо основне меню
-		setIsDeleteModalOpen(true); // Відкриваємо модальне вікно
+		closeMenu();
+		setIsDeleteModalOpen(true);
 	};
 
-	// Функція, яка буде викликана з модального вікна для підтвердження видалення
 	const confirmDeleteProfile = async () => {
-		setIsDeleting(true); // Починаємо процес видалення
+		setIsDeleting(true);
 		console.log(
-			'Видалення профілю підтверджено - тут буде виклик Server Action'
+			'Profilentfernung bestätigt - hier wird die Server Action aufgerufen'
 		);
 		try {
 			const result = await deleteCurrentUserAccount();
 			if (result.success) {
-				await signOut({ callbackUrl: '/' }); // Вихід після успішного видалення
+				await signOut({ callbackUrl: '/' });
 			} else {
 				alert(result.error || 'Fehler beim Löschen des Profils.');
 			}
@@ -92,75 +87,53 @@ export default function MainNavigation({
 			console.error('Fehler im confirmDeleteProfile:', error);
 			alert('Ein unerwarteter Fehler ist aufgetreten.');
 		} finally {
-			setIsDeleting(false); // Завершуємо процес видалення
-			setIsDeleteModalOpen(false); // Закриваємо модальне вікно
+			setIsDeleting(false);
+			setIsDeleteModalOpen(false);
 		}
-		// Тут буде виклик Server Action:
-		// setIsDeleting(false); // Завершуємо процес видалення
-		// setIsDeleteModalOpen(false); // Закриваємо модальне вікно
-		// Тимчасово просто вихід для демонстрації, якщо потрібно перевірити signOut
-		// await signOut({ callbackUrl: '/' });
 	};
 
-	// Оновлюємо список посилань, видаляючи "Profil bearbeiten" та "Abmelden",
-	// оскільки вони будуть у меню користувача (якщо ви реалізуєте окреме меню користувача)
-	// Або, якщо меню користувача немає, то "Profil bearbeiten" залишається тут.
-	// Кнопка "Abmelden" вже є окремо в кінці списку.
-
-	// Оновлюємо список посилань, додаючи нові пункти
 	const linkTargets: LinkTarget[] = [
 		{
-			text: 'Startseite', // Головна сторінка
+			text: 'Startseite',
 			url: '/',
 		},
 		{
-			text: 'Profil bearbeiten', // Редагувати профіль
+			text: 'Profil bearbeiten',
 			url: '/profile/edit',
 			isPrivate: true,
 		},
-		// --- Нові пункти меню (тільки для авторизованих) ---
 		{
-			text: 'Chat', // Чат
-			url: '/chat', // Заглушка для шляху
+			text: 'Chat',
+			url: '/chat',
 			isPrivate: true,
 		},
 		{
-			text: 'Bookmarks', // Закладки
-			url: '/bookmarks', // Заглушка для шляху
+			text: 'Bookmarks',
+			url: '/bookmarks',
 			isPrivate: true,
 		},
 		{
-			text: 'Likes', // Лайки
-			url: '/likes', // Заглушка для шляху
+			text: 'Likes',
+			url: '/likes',
 			isPrivate: true,
 		},
-		// ----------------------------------------------------
 	];
 
 	const hasUnreadMessages = unreadMessageCount > 0;
 
-	// --- ДІАГНОСТИЧНИЙ LOG ---
-	// console.log('MainNavigation RENDER, isDeleteModalOpen:', isDeleteModalOpen);
-	// -------------------------
-
 	return (
 		<>
 			<nav className="main-navigation">
-				{/* Логотип (посилання на головну) */}
 				<Link href="/" className="main-navigation__logo" onClick={closeMenu}>
-					{/* Замініть "Logo" на ваш <Image /> компонент або SVG */}
 					Amoria
 				</Link>
 				<div className="site-nav__center-content">
 					{' '}
-					{/* Новий блок з новим класом */}
 					<span className="site-nav__tagline">Liebe beginnt hier</span>{' '}
-					{/* Новий клас */}
 				</div>
 
 				<div className="user-actions-container">
 					{' '}
-					{/* Контейнер для інформації про користувача та кнопки меню */}
 					{isLoggedIn && (
 						<Link
 							href="/chat"
@@ -168,9 +141,9 @@ export default function MainNavigation({
 							aria-label="Meine Chats"
 						>
 							{hasUnreadMessages ? (
-								<CgMailOpen size={22} className="text-blue-600" /> // Іконка для непрочитаних
+								<CgMailOpen size={22} className="text-blue-600" />
 							) : (
-								<CgMail size={22} className="text-gray-600" /> // Стандартна іконка
+								<CgMail size={22} className="text-gray-600" />
 							)}
 							{hasUnreadMessages && (
 								<span className="absolute top-0 right-0 block h-4 w-4 transform -translate-y-1/2 translate-x-1/2 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
@@ -179,15 +152,14 @@ export default function MainNavigation({
 							)}
 						</Link>
 					)}
-					{/* Відображення імені та аватара, якщо користувач увійшов */}
 					{isLoggedIn && userImage && (
 						<div className="avatar-container">
 							<Image
 								src={userImage}
 								alt={userName || 'Benutzeravatar'}
-								fill // Використовуємо fill
-								style={{ objectFit: 'cover' }} // Зберігає пропорції, обрізаючи зайве
-								sizes="32px" // Підказка для оптимізації
+								fill
+								style={{ objectFit: 'cover' }}
+								sizes="32px"
 							/>
 						</div>
 					)}
@@ -196,7 +168,7 @@ export default function MainNavigation({
 					)}
 					{isLoggedIn && (
 						<button
-							className="main-navigation__button" // Ваші стилі для кнопки меню
+							className="main-navigation__button"
 							onClick={toggleMenu}
 							aria-expanded={isOpen}
 							aria-label="Hauptmenü"
@@ -206,23 +178,15 @@ export default function MainNavigation({
 					)}
 				</div>
 
-				{/* Випадаюче меню */}
 				{isOpen && (
 					<ul className="main-navigation__list">
 						{' '}
-						{/* Позиціонування меню */}
-						{getMenuItems(
-							linkTargets,
-							pathname,
-							isLoggedIn,
-							closeMenu
-							// handleDeleteProfileClick
-						)}
+						{getMenuItems(linkTargets, pathname, isLoggedIn, closeMenu)}
 						{isLoggedIn && (
 							<>
 								<li key="signout" className="border-t border-gray-200">
 									<button
-										className="main-navigation__link main-navigation__link--button w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" // Стилі для кнопки виходу
+										className="main-navigation__link main-navigation__link--button w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
 										onClick={async () => {
 											await signOut({ callbackUrl: '/' });
 											closeMenu();
@@ -231,10 +195,9 @@ export default function MainNavigation({
 										Abmelden
 									</button>
 								</li>
-								{/* Новий пункт "Profil löschen" */}
 								<li key="deleteprofile" className="border-t border-gray-200">
 									<button
-										className="button-delete-profile" // Стилі для небезпечної дії
+										className="button-delete-profile"
 										onClick={handleDeleteProfileClick}
 									>
 										<CgTrash className="mr-2" />
@@ -246,10 +209,9 @@ export default function MainNavigation({
 					</ul>
 				)}
 			</nav>
-			{/* Перевіряємо значення isDeleteModalOpen перед рендерингом */}
 			{isDeleteModalOpen && (
 				<DeleteProfileModal
-					isOpen={isDeleteModalOpen} // Передаємо актуальний стан
+					isOpen={isDeleteModalOpen}
 					onClose={() => setIsDeleteModalOpen(false)}
 					onConfirm={confirmDeleteProfile}
 					isDeleting={isDeleting}
@@ -259,13 +221,19 @@ export default function MainNavigation({
 	);
 }
 
-// Додаємо closeMenu до аргументів, щоб закривати меню при кліку на посилання
+/**
+ * Generiert Menüeinträge basierend auf den Link-Zielen, dem aktuellen Pfad und dem Anmeldestatus.
+ * @param {LinkTarget[]} linkTargets - Ein Array von Link-Ziel-Objekten.
+ * @param {string} pathname - Der aktuelle URL-Pfad.
+ * @param {boolean} isLoggedIn - Zeigt an, ob der Benutzer angemeldet ist.
+ * @param {() => void} closeMenu - Funktion zum Schließen des Menüs bei Klick.
+ * @returns {JSX.Element[]} Ein Array von JSX-Elementen, die die Menüeinträge darstellen.
+ */
 function getMenuItems(
 	linkTargets: LinkTarget[],
 	pathname: string,
 	isLoggedIn: boolean,
-	closeMenu: () => void // Функція для закриття меню
-	// handleDeleteProfileClick: () => void // Додано, але не використовується в map нижче
+	closeMenu: () => void
 ) {
 	return linkTargets
 		.filter(({ isPrivate = false, isPublicOnly = false }) => {
@@ -281,7 +249,7 @@ function getMenuItems(
 							className="main-navigation__link main-navigation__link--button w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
 							onClick={() => {
 								action();
-								closeMenu(); // Закриваємо меню
+								closeMenu();
 							}}
 						>
 							{text}
@@ -295,10 +263,9 @@ function getMenuItems(
 				? ({ 'aria-current': 'page' } as const)
 				: {};
 			const cssClasses = `main-navigation__link block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
-				// Базові стилі для посилань
 				isCurrentPage
 					? 'main-navigation__link--current bg-gray-100 font-semibold'
-					: '' // Стилі для активного посилання
+					: ''
 			}`;
 
 			return (
@@ -306,7 +273,7 @@ function getMenuItems(
 					<Link
 						className={cssClasses}
 						href={url!}
-						onClick={closeMenu} // Закриваємо меню при кліку на посилання
+						onClick={closeMenu}
 						{...attributes}
 					>
 						{text}
@@ -315,5 +282,3 @@ function getMenuItems(
 			);
 		});
 }
-////////////////////
-//////////////////////////

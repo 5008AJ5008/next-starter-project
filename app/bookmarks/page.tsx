@@ -6,10 +6,14 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
-	title: 'Meine Bookmarks', // Мої Закладки
+	title: 'Meine Bookmarks',
 };
 
-// Допоміжна функція для розрахунку віку (можна винести в окремий файл utils, якщо ще не зроблено)
+/**
+ * Berechnet das Alter einer Person anhand ihres Geburtsdatums.
+ * @param birthDate Das Geburtsdatum der Person. Kann null sein.
+ * @returns Das Alter in Jahren oder null, wenn kein Geburtsdatum angegeben ist.
+ */
 function calculateAge(birthDate: Date | null): number | null {
 	if (!birthDate) return null;
 	const today = new Date();
@@ -25,36 +29,38 @@ function calculateAge(birthDate: Date | null): number | null {
 	return age;
 }
 
+/**
+ * Stellt die Seite "Meine Lesezeichen" dar.
+ * Zeigt die von einem authentifizierten Benutzer mit Lesezeichen versehenen Profile an.
+ * Leitet nicht authentifizierte Benutzer zur Anmeldeseite weiter.
+ * @returns JSX-Element, das die Lesezeichenseite anzeigt.
+ */
 export default async function BookmarksPage() {
 	const session = await auth();
 
 	if (!session?.user?.id) {
-		// Якщо користувач не авторизований, перенаправляємо на сторінку входу
 		redirect('/api/auth/signin?callbackUrl=/bookmarks');
 	}
 
 	const currentUserId = session.user.id;
 
-	// Отримуємо закладки поточного користувача, включаючи дані профілю користувача, якого додали в закладки
 	const bookmarks = await prisma.bookmark.findMany({
 		where: {
-			bookmarkerId: currentUserId, // Закладки, зроблені поточним користувачем
+			bookmarkerId: currentUserId,
 		},
 		include: {
 			bookmarkedUser: {
-				// Включаємо дані користувача, якого додали в закладки
 				select: {
 					id: true,
 					name: true,
 					image: true,
 					city: true,
-					birthDate: true, // Для розрахунку віку
-					// Додайте інші поля, які хочете відображати
+					birthDate: true,
 				},
 			},
 		},
 		orderBy: {
-			createdAt: 'desc', // Показуємо новіші закладки першими
+			createdAt: 'desc',
 		},
 	});
 
@@ -67,16 +73,14 @@ export default async function BookmarksPage() {
 			{bookmarkedUsers.length === 0 && (
 				<p className="text-center text-gray-500">
 					Sie haben noch keine Profile zu Ihren Lesezeichen hinzugefügt.{' '}
-					{/* Ви ще не додали жодного профілю до закладок. */}
 				</p>
 			)}
 
 			<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
 				{bookmarkedUsers.map((user) => {
-					if (!user) return null; // Пропускаємо, якщо з якоїсь причини user не завантажився
+					if (!user) return null;
 					const age = calculateAge(user.birthDate);
 					return (
-						// Картка користувача (схожа на ту, що на головній сторінці або /users)
 						<div
 							key={user.id}
 							className="bg-white rounded-lg shadow-lg overflow-hidden transform transition-all hover:scale-105 group"
@@ -87,7 +91,7 @@ export default async function BookmarksPage() {
 							>
 								<div
 									className="relative w-full"
-									style={{ position: 'relative', paddingTop: '100%' }} // Квадратне співвідношення сторін
+									style={{ position: 'relative', paddingTop: '100%' }}
 								>
 									{user.image ? (
 										<Image
@@ -115,7 +119,6 @@ export default async function BookmarksPage() {
 								{user.city && (
 									<p className="text-sm text-gray-600 truncate">{user.city}</p>
 								)}
-								{/* Тут можна додати кнопку "Видалити з закладок", якщо потрібно */}
 							</div>
 						</div>
 					);

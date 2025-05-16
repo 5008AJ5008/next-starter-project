@@ -1,11 +1,12 @@
+/* Allgemeine Stile für Links */
 a {
-	/* color: var(--link-color); */
 	&:hover,
 	&:focus-visible {
 		color: var(--active-link-color);
 	}
 }
 
+/* Stile für die Hauptnavigation */
 .main-navigation {
 	text-transform: uppercase;
 	font-family: var(--font-karla);
@@ -16,19 +17,17 @@ a {
 	padding: 0px;
 	margin: 0px;
 
+	/* Stile für den Menü-Button in der Hauptnavigation */
 	.main-navigation__button {
 		display: flex;
 		align-items: center;
 		font-size: 1rem;
 		padding: 0.25rem 0.5rem;
-		/* background-color: var(--honeydew); */
 		background-color: var(--blue-12);
-		/* color: var(--link-color); */
 		color: white;
 		box-shadow: var(--shadow-4);
 		border: 1px solid black;
 		border-radius: 10px;
-		/* margin-bottom: 10px; */
 		svg {
 			width: 1.5rem;
 			height: 1.5rem;
@@ -39,12 +38,12 @@ a {
 		}
 	}
 
+	/* Stile für die Navigationsliste (Dropdown-Menü) */
 	.main-navigation__list {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		list-style: none;
-		/* background-color: palegoldenrod; */
 		background-color: rgba(0, 255, 242, 0.774);
 		gap: 0.5em;
 		padding: var(--size-fluid-3);
@@ -53,12 +52,12 @@ a {
 		top: 100%;
 		right: 0;
 		left: 0;
-		/* width: 100vw; */
 		padding-left: 0px;
 		padding-right: 0px;
 		margin-top: 15px;
 	}
 
+	/* Stile für einzelne Links in der Hauptnavigation */
 	.main-navigation__link {
 		text-decoration: none;
 		transition: color 0.5s ease;
@@ -68,10 +67,11 @@ a {
 		&:hover,
 		&:focus {
 			color: white;
-			/* color: black; */
 		}
 	}
 }
+
+/* Stile für das Logo in der Hauptnavigation */
 .main-navigation__logo {
 	margin-left: 20px;
 	color: white;
@@ -83,32 +83,43 @@ a {
 	font-style: italic;
 	font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
 }
+
+/* Container für Benutzerinformationen (vermutlich im Header) */
 .user-info {
 	margin-right: 20px;
 }
 
+/* Stile für den Button, der ungelesene Nachrichten anzeigt */
 .unread-messages-button {
 	margin: 10px;
 	color: white;
 }
+
+/* Container für den Avatar des Benutzers */
 .avatar-container {
 	width: 32px;
 	height: 32px;
 	position: relative;
 	border-radius: 50%;
 	overflow: hidden;
-	margin-right: 0.5rem; /* аналог mr-2 */
+	margin-right: 0.5rem;
 }
+
+/* Stile für die Benutzerbegrüßung */
 .user-greeting {
-	margin-right: 1rem; /* аналог mr-4 */
-	font-size: 0.875rem; /* аналог text-sm */
+	margin-right: 1rem;
+	font-size: 0.875rem;
 	color: black;
 }
+
+/* Container für Benutzeraktionen (z.B. Avatar, Begrüßung, Menü-Button) */
 .user-actions-container {
 	display: flex;
 	align-items: center;
 	margin-right: 1%;
 }
+
+/* Stile für den Tagline/Slogan der Webseite */
 .site-nav__tagline {
 	font-size: 30px;
 	font-style: italic;
@@ -117,9 +128,13 @@ a {
 		display: none;
 	}
 }
+
+/* Spezifische Farbdefinition für Navigationslinks (ggf. Überschreibung oder Standard) */
 .main-navigation__link {
 	color: gray;
 }
+
+/* Stile für den Button zum Löschen des Profils */
 .button-delete-profile {
 	background-color: red;
 	color: black;

@@ -3,25 +3,21 @@
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-// Імпорт createOrFindChatAndRedirect видалено, оскільки він не використовується тут.
-// Якщо знадобиться функція для отримання/створення ID чату без redirect,
-// її потрібно буде створити/імпортувати окремо.
 
-// Тип для відповіді від togglePhotoLike
 type ToggleLikeResponse = {
 	success: boolean;
-	isLiked?: boolean; // Повертаємо новий стан лайка
-	isMatch?: boolean; // Повертаємо, чи стався метч
-	chatId?: string; // Повертаємо ID чату, якщо стався метч
+	isLiked?: boolean;
+	isMatch?: boolean;
+	chatId?: string;
 	error?: string;
 	message?: string;
 };
 
 /**
- * Додає або видаляє лайк для профілю/фото іншого користувача.
- * Якщо виникає взаємний лайк (метч), створює/знаходить чат
- * та надсилає системне повідомлення в цей чат.
- * @param likedUserId ID користувача, чиє фото/профіль лайкають.
+ * Fügt ein "Like" für das Profil/Foto eines anderen Benutzers hinzu oder entfernt es.
+ * Wenn ein gegenseitiges "Like" (Match) auftritt, wird ein Chat erstellt/gefunden
+ * und eine Systemnachricht an diesen Chat gesendet.
+ * @param likedUserId ID des Benutzers, dessen Foto/Profil geliked wird.
  */
 export async function togglePhotoLike(
 	likedUserId: string
@@ -35,7 +31,7 @@ export async function togglePhotoLike(
 	const likerId = session.user.id;
 
 	if (likerId === likedUserId) {
-		return { success: false, error: 'Sie können sich nicht selbst liken.' }; // Ви не можете лайкнути себе
+		return { success: false, error: 'Sie können sich nicht selbst liken.' };
 	}
 
 	try {
@@ -43,9 +39,7 @@ export async function togglePhotoLike(
 		let matchOccurred = false;
 		let newChatIdForMatch: string | undefined = undefined;
 
-		// Використовуємо транзакцію для атомарності операцій
 		await prisma.$transaction(async (tx) => {
-			// Перевіряємо, чи існує вже такий лайк
 			const existingLike = await tx.photoLike.findUnique({
 				where: {
 					likerId_likedUserId: {
@@ -56,16 +50,13 @@ export async function togglePhotoLike(
 			});
 
 			if (existingLike) {
-				// Якщо лайк існує, видаляємо його
 				await tx.photoLike.delete({
 					where: {
 						id: existingLike.id,
 					},
 				});
 				isCurrentlyLiked = false;
-				// console.log(`Like von ${likerId} für ${likedUserId} entfernt.`);
 			} else {
-				// Якщо лайка немає, створюємо його
 				await tx.photoLike.create({
 					data: {
 						likerId,
@@ -73,14 +64,12 @@ export async function togglePhotoLike(
 					},
 				});
 				isCurrentlyLiked = true;
-				// console.log(`Like von ${likerId} für ${likedUserId} hinzugefügt.`);
 
-				// Перевіряємо на взаємний лайк (метч)
 				const mutualLike = await tx.photoLike.findUnique({
 					where: {
 						likerId_likedUserId: {
-							likerId: likedUserId, // Тепер likedUser є liker
-							likedUserId: likerId, // А liker є likedUser
+							likerId: likedUserId,
+							likedUserId: likerId,
 						},
 					},
 				});
@@ -120,9 +109,7 @@ export async function togglePhotoLike(
 						where: { id: likerId },
 						select: { name: true },
 					});
-					// const likedUser = await tx.user.findUnique({ where: { id: likedUserId }, select: { name: true } }); // Це вже є, можна використовувати likerUser для другого імені
 
-					// Змінна messageContentForLiker видалена, оскільки messageContent використовується для обох
 					const messageContent = `🎉 Sie und ${
 						likerUser?.name || 'jemand'
 					} haben sich gegenseitig geliked! Starten Sie ein Gespräch.`;
@@ -142,7 +129,7 @@ export async function togglePhotoLike(
 					}
 				}
 			}
-		}); // Кінець транзакції
+		});
 
 		revalidatePath(`/users/${likedUserId}`);
 		revalidatePath('/likes');
@@ -170,6 +157,11 @@ export async function togglePhotoLike(
 	}
 }
 
+/**
+ * Überprüft, ob der aktuelle Benutzer einen anderen Benutzer geliked hat.
+ * @param likedUserId Die ID des Benutzers, für den der Like-Status überprüft werden soll.
+ * @returns True, wenn der Benutzer geliked wurde, andernfalls false.
+ */
 export async function hasUserLiked(likedUserId: string): Promise<boolean> {
 	const session = await auth();
 	if (!session?.user?.id) {

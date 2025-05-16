@@ -1,19 +1,24 @@
-// User.tsx
-import type { AuthUserProfile } from '@/types/auth-types'; // Імпортуємо правильний тип
+import type { AuthUserProfile } from '@/types/auth-types';
 import Image from 'next/image';
 
-// Використовуємо правильний тип для Props
 type Props = AuthUserProfile;
 
+/**
+ * Stellt die Informationen eines angemeldeten Benutzers dar, einschließlich Name und Avatarbild.
+ * Verarbeitet gracefully Fälle, in denen Name oder Bild nicht vorhanden sind.
+ *
+ * @param {Props} props - Die Eigenschaften für die Komponente, die Benutzername und Bild-URL enthalten.
+ * @param {string | null | undefined} props.name - Der Name des Benutzers.
+ * @param {string | null | undefined} props.image - Die URL zum Avatarbild des Benutzers.
+ * @returns JSX.Element - Ein Div-Element, das den Anmeldestatus und optional das Benutzerbild anzeigt.
+ */
 export default function User({ name, image }: Props) {
-	// Обробляємо можливі null значення
-	const displayName = name ?? 'Unbekannter Benutzer'; // Якщо name = null/undefined
-	const altText = name ? `Avatar von ${name}` : 'Benutzer-Avatar'; // Безпечний alt
+	const displayName = name ?? 'Unbekannter Benutzer';
+	const altText = name ? `Avatar von ${name}` : 'Benutzer-Avatar';
 
 	return (
 		<div>
 			Angemeldet als {displayName}
-			{/* Перевірка наявності image перед рендерингом */}
 			{image && (
 				<Image
 					src={image}

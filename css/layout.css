@@ -1,26 +1,25 @@
+/* Grundlegende Stile für den Body-Bereich */
 body {
 	background-color: var(--background-color);
 }
 
+/* Haupt-Wrapper für die gesamte Seite, stellt sicher, dass der Footer unten bleibt */
 .site-wrapper {
 	display: flex;
 	flex-direction: column;
 	min-height: 100vh;
 }
 
+/* Allgemeine Stile für Kopf- und Fußzeile */
 .site-header,
 .site-footer {
 	padding: var(--size-fluid-3);
-	/* background-color: var(--header-footer-background); */
 	background-color: var(--blue-9);
 }
 
+/* Spezifische Stile für die Kopfzeile */
 .site-header {
-	background: linear-gradient(
-		to right,
-		#fbc2eb,
-		#a6c1ee
-	); /* рожево-блакитний перелив */
+	background: linear-gradient(to right, #fbc2eb, #a6c1ee);
 	color: #333;
 	padding: 1rem 2rem;
 	color: white;
@@ -38,6 +37,7 @@ body {
 	display: flex;
 	justify-content: space-around;
 	width: 100%;
+	/* Titel innerhalb der Kopfzeile */
 	.site-header__title {
 		font-family: var(--font-karla);
 		font-size: 3rem;
@@ -46,14 +46,19 @@ body {
 		align-items: center;
 	}
 }
+
+/* Stile für die Hauptnavigation */
 .main-navigation {
 	display: flex;
 	justify-content: space-between;
 }
+
+/* Container für den Hauptinhalt der Seite */
 .site-content {
 	flex: 1;
 }
 
+/* Allgemeine Stile für den 'main'-HTML-Tag */
 main {
 	padding: var(--size-fluid-2);
 	p {
@@ -61,18 +66,21 @@ main {
 	}
 }
 
+/* Spezifische Stile für die Fußzeile */
 .site-footer {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 1rem;
 }
 
+/* Standard-Layout-Klasse für zentrierten Inhalt mit maximaler Breite */
 .default-layout {
 	max-width: 56rem;
 	padding-inline: 1rem;
 	margin-inline: auto;
 }
 
+/* Layout-Klasse für Seiten mit einer Sidebar */
 .sidebar-layout {
 	max-width: 70rem;
 	margin-inline: auto;
@@ -81,6 +89,7 @@ main {
 		grid-template-columns: 1fr 20rem;
 	}
 
+	/* Stile für die Sidebar innerhalb des Sidebar-Layouts */
 	:where(.sidebar-layout__sidebar) {
 		padding: var(--size-fluid-2);
 		@media (--large) {
@@ -94,6 +103,7 @@ main {
 	}
 }
 
+/* Allgemeine Klasse für Rasterlayouts */
 .grid {
 	display: var(--grid-display, grid);
 	grid-template-columns: repeat(
@@ -102,18 +112,26 @@ main {
 	);
 	gap: var(--grid-gap, 1rem);
 }
+
+/* Klasse für zentrierten Grundtext */
 .grund-text {
 	text-align: center;
 }
+
+/* Stile für den Willkommensbereich */
 .willkommen {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 }
+
+/* Stile für den Willkommenstext */
 .willkommen-text {
 	margin-top: 0px;
 	margin-bottom: 0px;
 }
+
+/* Stile für den Anmelde-Button-Container */
 .signin-button {
 	margin: 5px;
 }

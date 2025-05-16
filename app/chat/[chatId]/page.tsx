@@ -2,17 +2,19 @@ import type { Metadata } from 'next';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { notFound, redirect } from 'next/navigation';
-// 1. Імпортуємо компонент ChatInterface
-import ChatInterface from '@/components/chat/ChatInterface'; // Переконайтеся, що шлях правильний
-// Типи Message та Author тепер можна взяти з ChatInterface, якщо вони там експортовані,
-// або залишити їх визначення в ChatInterface і передавати дані відповідного типу.
-// Для простоти, припустимо, що ChatInterface очікує дані у форматі, який ми підготуємо.
-import type { Message, Author } from '@/components/chat/ChatInterface'; // Припускаємо, що ці типи експортовані
+import ChatInterface from '@/components/chat/ChatInterface';
+import type { Message, Author } from '@/components/chat/ChatInterface';
 
 type Props = {
 	params: Promise<{ chatId: string }>;
 };
 
+/**
+ * Generiert dynamisch Metadaten für die Chat-Seite.
+ * Der Titel enthält den Namen des anderen Chat-Teilnehmers.
+ * @param props Die Eigenschaften, die die `chatId` als Promise enthalten.
+ * @returns Ein Promise, das die Metadaten-Objekte auflöst.
+ */
 export async function generateMetadata({
 	params: paramsPromise,
 }: Props): Promise<Metadata> {
@@ -47,6 +49,13 @@ export async function generateMetadata({
 	return { title: chatTitle };
 }
 
+/**
+ * Stellt die Chat-Seite dar.
+ * Lädt die Chat-Details und initialen Nachrichten und rendert die Chat-Oberfläche.
+ * Leitet nicht authentifizierte Benutzer zur Anmeldeseite weiter.
+ * @param paramsPromise Ein Promise, das die `chatId` aus den Routenparametern enthält.
+ * @returns JSX-Element, das die Chat-Seite anzeigt.
+ */
 export default async function ChatPage({ params: paramsPromise }: Props) {
 	const session = await auth();
 
@@ -58,7 +67,6 @@ export default async function ChatPage({ params: paramsPromise }: Props) {
 	}
 	const currentUserId = session.user.id;
 
-	// Завантажуємо дані чату та початкові повідомлення
 	const chatWithMessages = await prisma.chat.findUnique({
 		where: {
 			id: chatId,
@@ -72,16 +80,13 @@ export default async function ChatPage({ params: paramsPromise }: Props) {
 			participants: {
 				include: {
 					user: {
-						// Включаємо повні дані користувача для учасників
 						select: { id: true, name: true, image: true },
 					},
 				},
 			},
 			messages: {
-				// Завантажуємо всі повідомлення для початкового відображення
 				include: {
 					author: {
-						// Включаємо дані автора для кожного повідомлення
 						select: { id: true, name: true, image: true },
 					},
 				},
@@ -96,22 +101,18 @@ export default async function ChatPage({ params: paramsPromise }: Props) {
 		notFound();
 	}
 
-	// Готуємо дані для передачі в клієнтський компонент
-	// Перетворюємо Date на ISO рядок для серіалізації
 	const initialMessages: Message[] = chatWithMessages.messages.map((msg) => ({
 		id: msg.id,
 		content: msg.content,
-		createdAt: msg.createdAt.toISOString(), // Важливо для серіалізації
-		authorId: msg.authorId, // Тепер може бути null
-		// --- ЗМІНА ТУТ: Додано перевірку на msg.author ---
+		createdAt: msg.createdAt.toISOString(),
+		authorId: msg.authorId,
 		author: msg.author
 			? {
-					// Якщо автор існує, передаємо його дані
 					id: msg.author.id,
 					name: msg.author.name,
 					image: msg.author.image,
 			  }
-			: null, // Інакше передаємо null
+			: null,
 		chatId: msg.chatId,
 		isSystemMessage: msg.isSystemMessage,
 	}));
@@ -120,7 +121,6 @@ export default async function ChatPage({ params: paramsPromise }: Props) {
 		(p) => p.userId !== currentUserId
 	)?.user;
 
-	// Перетворюємо на тип Author, обробляючи можливий undefined
 	const otherParticipant: Author | null = otherParticipantData
 		? {
 				id: otherParticipantData.id,
@@ -130,13 +130,8 @@ export default async function ChatPage({ params: paramsPromise }: Props) {
 		: null;
 
 	return (
-		// Основний контейнер сторінки
-		// h-[calc(100vh-var(--header-height,4rem))] - це Tailwind клас для висоти.
-		// Якщо ви не використовуєте Tailwind, вам потрібно буде задати висоту через CSS.
-		// Наприклад, style={{ height: 'calc(100vh - 64px)' }} (якщо висота хедера 64px)
 		<main className="chat-page-container">
 			{' '}
-			{/* Замініть на ваш клас або додайте стилі */}
 			<ChatInterface
 				initialMessages={initialMessages}
 				chatId={chatId}

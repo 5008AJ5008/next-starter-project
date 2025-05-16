@@ -1,47 +1,43 @@
 'use client';
 
 import React from 'react';
-import { CgClose } from 'react-icons/cg'; // Іконка для кнопки закриття (опціонально)
+import { CgClose } from 'react-icons/cg';
 
 type DeleteProfileModalProps = {
 	isOpen: boolean;
 	onClose: () => void;
-	onConfirm: () => Promise<void>; // Функція підтвердження може бути асинхронною
-	isDeleting?: boolean; // Опціональний стан для індикації процесу видалення
+	onConfirm: () => Promise<void>;
+	isDeleting?: boolean;
 };
 
+/**
+ * Stellt ein modales Fenster zur Bestätigung der Profillöschung dar.
+ * Ermöglicht dem Benutzer, die Löschaktion abzubrechen oder zu bestätigen.
+ * Zeigt einen Ladezustand an, während die Löschung durchgeführt wird.
+ *
+ * @param {DeleteProfileModalProps} props - Die Eigenschaften für die Komponente.
+ * @param {boolean} props.isOpen - Bestimmt, ob das Modal sichtbar ist.
+ * @param {() => void} props.onClose - Funktion, die aufgerufen wird, wenn das Modal geschlossen werden soll (z.B. Klick auf Abbrechen, Schließen-Button oder Overlay).
+ * @param {() => Promise<void>} props.onConfirm - Asynchrone Funktion, die aufgerufen wird, wenn der Benutzer die Löschung bestätigt.
+ * @param {boolean} [props.isDeleting=false] - Zeigt an, ob der Löschvorgang gerade ausgeführt wird (optional).
+ * @returns JSX.Element | null - Das Modal-JSX-Element, wenn `isOpen` true ist, andernfalls null.
+ */
 export default function DeleteProfileModal({
 	isOpen,
 	onClose,
 	onConfirm,
-	isDeleting = false, // Значення за замовчуванням
+	isDeleting = false,
 }: DeleteProfileModalProps) {
 	if (!isOpen) {
 		return null;
 	}
 
 	return (
-		// Оверлей (фон)
-		// Використовуйте ваші CSS класи для стилізації
-		<div
-			className="delete-modal-overlay" // Клас для CSS
-			// style={{
-			//   position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-			//   backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
-			//   alignItems: 'center', justifyContent: 'center', zIndex: 50
-			// }}
-			onClick={onClose} // Закриття при кліку на фон
-		>
-			{/* Саме модальне вікно */}
+		<div className="delete-modal-overlay" onClick={onClose}>
 			<div
-				className="delete-modal-content" // Клас для CSS
-				// style={{
-				//   backgroundColor: 'white', padding: '20px', borderRadius: '8px',
-				//   textAlign: 'center', maxWidth: '400px', width: '90%'
-				// }}
-				onClick={(e) => e.stopPropagation()} // Запобігає закриттю при кліку на саме вікно
+				className="delete-modal-content"
+				onClick={(e) => e.stopPropagation()}
 			>
-				{/* Опціональна кнопка закриття у кутку */}
 				<button
 					onClick={onClose}
 					className="delete-modal-close-button"
@@ -58,18 +54,17 @@ export default function DeleteProfileModal({
 				</p>
 				<div className="delete-modal-actions">
 					{' '}
-					{/* Клас для контейнера кнопок */}
 					<button
 						onClick={onClose}
-						disabled={isDeleting} // Деактивуємо під час видалення
-						className="delete-modal-button delete-modal-button--cancel" // Класи для CSS
+						disabled={isDeleting}
+						className="delete-modal-button delete-modal-button--cancel"
 					>
 						Abbrechen
 					</button>
 					<button
 						onClick={onConfirm}
-						disabled={isDeleting} // Деактивуємо під час видалення
-						className="delete-modal-button delete-modal-button--confirm" // Класи для CSS
+						disabled={isDeleting}
+						className="delete-modal-button delete-modal-button--confirm"
 					>
 						{isDeleting ? 'Löschen...' : 'Endgültig löschen'}
 					</button>

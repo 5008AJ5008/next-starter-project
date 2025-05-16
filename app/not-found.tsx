@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-// https://nextjs.org/docs/app/api-reference/file-conventions/not-found
-
 export const metadata: Metadata = {
 	title: '404 - Nicht gefunden 🤷',
 };
 
+/**
+ * Stellt die Standard-404-Fehlerseite dar, wenn eine Route nicht gefunden wird.
+ * @returns JSX-Element, das die Nicht-gefunden-Seite anzeigt.
+ */
 export default function NotFound() {
 	return (
 		<main className="default-layout">
@@ -17,12 +19,6 @@ export default function NotFound() {
 				<li>
 					<Link href="/">Startseite</Link>
 				</li>
-				{/* <li>
-          <Link href="/blog">Blog</Link>
-        </li>
-        <li>
-          <Link href="/shop">Produktübersicht</Link>
-        </li> */}
 			</ul>
 		</main>
 	);

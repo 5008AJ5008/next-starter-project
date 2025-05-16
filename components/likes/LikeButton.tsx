@@ -1,49 +1,60 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-// Переконайтеся, що шлях до likeActions правильний
 import { togglePhotoLike } from '@/actions/likeActions';
-// Іконки для лайків (наприклад, сердечка)
-import { FaHeart, FaRegHeart } from 'react-icons/fa'; // Або інші іконки на ваш вибір
-import type { MouseEvent as ReactMouseEvent } from 'react'; // Імпортуємо MouseEvent як ReactMouseEvent, щоб уникнути конфлікту імен, якщо потрібно
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 
 type LikeButtonProps = {
-	likedUserId: string; // ID користувача, чий профіль/фото лайкають
-	initialIsLiked: boolean; // Початковий стан: чи лайкнув поточний користувач цього користувача
-	currentUserId?: string; // ID поточного авторизованого користувача
-	// onLikeToggle?: (isLiked: boolean, isMatch?: boolean, chatId?: string) => void; // Callback при зміні стану
+	likedUserId: string;
+	initialIsLiked: boolean;
+	currentUserId?: string;
 };
 
+/**
+ * Stellt eine Schaltfläche zum Liken oder Entliken eines Benutzerprofils/Fotos dar.
+ * Verwendet optimistisches Update für eine reaktionsschnelle Benutzeroberfläche und zeigt einen Ladezustand an.
+ * Die Schaltfläche wird nicht angezeigt, wenn der aktuelle Benutzer das eigene Profil betrachtet oder nicht angemeldet ist.
+ * Bei einem Match (gegenseitiges Liken) wird eine Konsolennachricht ausgegeben.
+ *
+ * @param {LikeButtonProps} props - Die Eigenschaften für die Komponente.
+ * @param {string} props.likedUserId - Die ID des Benutzers, dessen Profil/Foto geliked wird.
+ * @param {boolean} props.initialIsLiked - Der anfängliche Like-Status.
+ * @param {string} [props.currentUserId] - Die ID des aktuell angemeldeten Benutzers.
+ * @returns JSX.Element | null - Die Like-Schaltfläche oder null, wenn sie nicht angezeigt werden soll.
+ */
 export default function LikeButton({
 	likedUserId,
 	initialIsLiked,
 	currentUserId,
-}: // onLikeToggle,
-LikeButtonProps) {
+}: LikeButtonProps) {
 	const [isLiked, setIsLiked] = useState(initialIsLiked);
 	const [isPending, startTransition] = useTransition();
 
-	// Не показуємо кнопку, якщо це профіль самого користувача або користувач не авторизований
 	if (!currentUserId || currentUserId === likedUserId) {
 		return null;
 	}
 
-	// Використовуємо React.MouseEvent<HTMLButtonElement> для типізації події
+	/**
+	 * Behandelt das Umschalten des Like-Status.
+	 * Stoppt die Ereignisweitergabe und verhindert Standardaktionen.
+	 * Führt ein optimistisches UI-Update durch und ruft die Server-Aktion `togglePhotoLike` auf.
+	 * Behandelt Erfolgs- und Fehlerantworten der Server-Aktion.
+	 * @param {ReactMouseEvent<HTMLButtonElement>} event - Das Klick-Ereignis der Schaltfläche.
+	 */
 	const handleToggleLike = async (
 		event: ReactMouseEvent<HTMLButtonElement>
 	) => {
-		event.stopPropagation(); // <--- ЗУПИНЯЄМО СПЛИВАННЯ ПОДІЇ
-		event.preventDefault(); // Додатково, щоб запобігти будь-якій стандартній дії кнопки, якщо вона всередині форми
+		event.stopPropagation();
+		event.preventDefault();
 
 		startTransition(async () => {
 			const newIsLikedState = !isLiked;
-			// Оптимістичне оновлення UI
 			setIsLiked(newIsLikedState);
 
 			const response = await togglePhotoLike(likedUserId);
 
 			if (!response.success) {
-				// Якщо сталася помилка, повертаємо попередній стан
 				setIsLiked(!newIsLikedState);
 				console.error(response.error || 'Fehler beim Umschalten des Likes.');
 				alert(
@@ -51,24 +62,14 @@ LikeButtonProps) {
 						'Aktion fehlgeschlagen. Bitte versuchen Sie es erneut.'
 				);
 			} else {
-				// Оновлюємо стан на основі відповіді сервера
-				// (може бути корисним, якщо isLiked змінився через іншу дію)
 				if (typeof response.isLiked === 'boolean') {
 					setIsLiked(response.isLiked);
 				}
 
 				if (response.isMatch && response.chatId) {
-					// Тут можна, наприклад, показати сповіщення "Es ist ein Match!"
-					// Або навіть запропонувати перейти до чату.
-					// Для простоти, поки що тільки логуємо.
 					console.log(
 						`CLIENT: Match! Chat ID: ${response.chatId}. Consider UI update.`
 					);
-					// Наприклад, можна було б використати useRouter для переходу:
-					// import { useRouter } from 'next/navigation';
-					// const router = useRouter();
-					// router.push(`/chat/${response.chatId}`);
-					// Але це потрібно робити обережно, щоб не переривати користувача.
 				}
 			}
 		});
@@ -78,17 +79,16 @@ LikeButtonProps) {
 		<button
 			onClick={handleToggleLike}
 			disabled={isPending}
-			// Додайте ваші CSS класи для кнопки
 			className="like-button p-2 rounded-full hover:bg-pink-100 disabled:opacity-50"
 			aria-label={isLiked ? 'Like entfernen' : 'Like hinzufügen'}
 			title={isLiked ? 'Like entfernen' : 'Like hinzufügen'}
 		>
 			{isPending ? (
-				<span className="loading-spinner"></span> // Додайте CSS для спінера завантаження
+				<span className="loading-spinner"></span>
 			) : isLiked ? (
-				<FaHeart size={24} className="text-red-500" /> // Заповнене сердечко
+				<FaHeart size={24} className="text-red-500" />
 			) : (
-				<FaRegHeart size={24} className="text-gray-500" /> // Порожнє сердечко
+				<FaRegHeart size={24} className="text-gray-500" />
 			)}
 		</button>
 	);

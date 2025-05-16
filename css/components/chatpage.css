@@ -1,92 +1,98 @@
+/* Haupt-Wrapper für die gesamte Chat-Oberfläche */
 .chat-interface-wrapper {
 	display: flex;
 	flex-direction: column;
-	height: 100%; /* Має займати всю висоту батьківського .chat-page-container */
+	height: 100%;
 	width: 100%;
-	background-color: #f9fafb; /* Світло-сірий фон для всього інтерфейсу, якщо потрібно */
+	background-color: #f9fafb;
 }
 
-/* Хедер чату */
+/* Kopfzeile des Chats */
 .chat-header {
-	padding: 1rem; /* Відступи */
-	border-bottom: 1px solid #e5e7eb; /* Лінія знизу */
-	background-color: #f3f4f6; /* Світліший фон для хедера */
-	flex-shrink: 0; /* Щоб хедер не стискався */
-	position: sticky; /* "Прилипає" до верху при прокрутці */
+	padding: 1rem;
+	border-bottom: 1px solid #e5e7eb;
+	background-color: #f3f4f6;
+	flex-shrink: 0;
+	position: sticky;
 	top: 0;
-	z-index: 10; /* Щоб був поверх списку повідомлень, якщо список має свій z-index */
+	z-index: 10;
 }
 
+/* Inhalt der Chat-Kopfzeile (Avatar und Name) */
 .chat-header-content {
 	display: flex;
 	align-items: center;
-	gap: 0.75rem; /* Відстань між аватаром та ім'ям */
+	gap: 0.75rem;
 }
 
+/* Avatar in der Chat-Kopfzeile */
 .chat-header-avatar {
 	border-radius: 50%;
-	/* object-fit: cover; -- це вже є в inline-стилі для Image */
 }
 
+/* Name des Chatpartners in der Kopfzeile */
 .chat-header-name {
-	font-size: 1.25rem; /* Розмір тексту для імені */
-	font-weight: 600; /* Напівжирний */
-	color: #1f2937; /* Темно-сірий колір тексту */
+	font-size: 1.25rem;
+	font-weight: 600;
+	color: #1f2937;
 }
 
-/* Список повідомлень */
+/* Container für die Liste der Chat-Nachrichten */
 .chat-messages-list {
-	flex-grow: 1; /* Займає весь доступний вертикальний простір */
-	overflow-y: auto; /* Додає прокрутку, якщо повідомлень багато */
-	padding: 1rem; /* Відступи всередині списку */
+	flex-grow: 1;
+	overflow-y: auto;
+	padding: 1rem;
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem; /* Відстань між message-row */
-	background-color: #f0f2f5; /* Трохи інший фон для області повідомлень */
+	gap: 0.5rem;
+	background-color: #f0f2f5;
 }
 
+/* Text, der angezeigt wird, wenn keine Nachrichten im Chat vorhanden sind */
 .chat-no-messages-text {
 	text-align: center;
-	color: #6b7280; /* Сірий колір тексту */
-	margin-top: 2rem; /* Відступ зверху */
+	color: #6b7280;
+	margin-top: 2rem;
 	font-style: italic;
 }
 
-/* Контейнер для кожного рядка з повідомленням */
+/* Container für eine einzelne Nachrichtenreihe (Avatar und Sprechblase) */
 .message-row {
 	display: flex;
-	align-items: flex-end; /* Вирівнює аватари та бульбашки по нижньому краю */
+	align-items: flex-end;
 	width: 100%;
-	/* margin-bottom: 8px; -- замінено на gap у .chat-messages-list */
 }
 
+/* Ausrichtung für eigene Nachrichten */
 .message-row--own {
-	justify-content: flex-end; /* Власні повідомлення праворуч */
+	justify-content: flex-end;
 }
 
+/* Ausrichtung für Nachrichten von anderen */
 .message-row--other {
-	justify-content: flex-start; /* Чужі повідомлення ліворуч */
+	justify-content: flex-start;
 }
 
-/* Аватар поруч із повідомленням */
+/* Avatar neben einer Nachricht */
 .message-avatar {
 	width: 24px;
 	height: 24px;
 	border-radius: 50%;
-	/* object-fit: cover; -- це вже є в inline-стилі для Image */
-	flex-shrink: 0; /* Щоб аватар не стискався */
+	flex-shrink: 0;
 }
+/* Stile für den eigenen Avatar (rechts von der Nachricht) */
 .message-avatar--own {
 	margin-left: 8px;
-	order: 1; /* Аватар після бульбашки для власних повідомлень */
+	order: 1;
 }
+/* Stile für den Avatar anderer (links von der Nachricht) */
 .message-avatar--other {
 	margin-right: 8px;
 }
 
-/* Бульбашка повідомлення */
+/* Sprechblase für Nachrichten */
 .message-bubble {
-	max-width: 70%; /* Обмеження ширини бульбашки */
+	max-width: 70%;
 	padding: 8px 12px;
 	border-radius: 18px;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -94,146 +100,154 @@
 	line-height: 1.4;
 }
 
+/* Eigene Sprechblase */
 .message-bubble--own {
-	background-color: #3b82f6; /* Синій */
+	background-color: #3b82f6;
 	color: white;
-	border-top-right-radius: 4px; /* "Хвостик" для бульбашки */
+	border-top-right-radius: 4px;
 }
 
+/* Sprechblase von anderen */
 .message-bubble--other {
-	background-color: #ffffff; /* Білий */
-	color: #1f2937; /* Темно-сірий */
-	border: 1px solid #e5e7eb; /* Світло-сіра рамка */
-	border-top-left-radius: 4px; /* "Хвостик" для бульбашки */
+	background-color: #ffffff;
+	color: #1f2937;
+	border: 1px solid #e5e7eb;
+	border-top-left-radius: 4px;
 }
 
-/* Текст повідомлення */
+/* Inhalt (Text) der Nachricht */
 .message-content {
-	font-size: 0.875rem; /* 14px */
+	font-size: 0.875rem;
 }
 
-/* Час повідомлення */
+/* Zeitstempel unter einer Nachricht */
 .message-timestamp {
-	font-size: 0.75rem; /* 12px */
+	font-size: 0.75rem;
 	margin-top: 4px;
 	text-align: right;
 	display: block;
 }
+/* Zeitstempel für eigene Nachrichten */
 .message-timestamp--own {
-	color: #dbeafe; /* Світло-блакитний */
+	color: #dbeafe;
 }
+/* Zeitstempel für Nachrichten von anderen */
 .message-timestamp--other {
-	color: #9ca3af; /* Сірий */
+	color: #9ca3af;
 }
 
-/* Стилі для системних повідомлень */
+/* Stile für Systemnachrichten (z.B. "Match erstellt") */
 .message-row--system {
 	justify-content: center;
 	margin-top: 12px;
 	margin-bottom: 12px;
 }
 .message-bubble--system {
-	background-color: #e5e7eb; /* Світло-сірий фон */
-	color: #4b5563; /* Темніший сірий текст */
+	background-color: #e5e7eb;
+	color: #4b5563;
 	padding: 6px 10px;
 	border-radius: 8px;
 	font-size: 0.8rem;
 	text-align: center;
 	max-width: 80%;
-	box-shadow: none; /* Без тіні для системних */
+	box-shadow: none;
 }
 
-/* Контейнер форми надсилання */
+/* Container für das Formular zum Senden von Nachrichten */
 .chat-form-container {
 	padding: 1rem;
 	border-top: 1px solid #e5e7eb;
-	background-color: #ffffff; /* Білий фон */
-	flex-shrink: 0; /* Щоб форма не стискалася */
-	position: sticky; /* "Прилипає" до низу */
+	background-color: #ffffff;
+	flex-shrink: 0;
+	position: sticky;
 	bottom: 0;
 }
 
-/* Стилі для ChatMessageForm (якщо вони потрібні) */
+/* Formular zum Senden von Chat-Nachrichten */
 .chat-message-form {
 	display: flex;
 	align-items: center;
 }
 
+/* Eingabefeld für Chat-Nachrichten */
 .chat-form-input {
 	flex-grow: 1;
-	padding: 0.5rem 0.75rem; /* 8px 12px */
-	border: 1px solid #d1d5db; /* Сіра рамка */
-	border-radius: 0.375rem 0 0 0.375rem; /* Заокруглення зліва */
+	padding: 0.5rem 0.75rem;
+	border: 1px solid #d1d5db;
+	border-radius: 0.375rem 0 0 0.375rem;
 	font-size: 0.875rem;
 }
 .chat-form-input:focus {
 	outline: none;
-	border-color: #3b82f6; /* Синій при фокусі */
+	border-color: #3b82f6;
 	box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
 }
 
+/* Absende-Button für Chat-Nachrichten */
 .chat-form-submit-button {
 	padding: 0.5rem 1rem;
-	background-color: #3b82f6; /* Синій */
+	background-color: #3b82f6;
 	color: white;
 	border: 1px solid #3b82f6;
-	border-radius: 0 0.375rem 0.375rem 0; /* Заокруглення справа */
+	border-radius: 0 0.375rem 0.375rem 0;
 	cursor: pointer;
 	font-weight: 500;
 }
 .chat-form-submit-button:hover {
-	background-color: #2563eb; /* Темніший синій */
+	background-color: #2563eb;
 }
 .chat-form-submit-button:disabled {
 	opacity: 0.5;
 	cursor: not-allowed;
 }
 
+/* Container für die Seite mit der Chat-Liste */
 .chat-list-page {
-	/* Приклад: відступи та максимальна ширина, як у Tailwind "container mx-auto px-4 py-8" */
-	max-width: 1280px; /* або інше значення для 'container' */
+	max-width: 1280px;
 	margin-left: auto;
 	margin-right: auto;
-	padding: 2rem 1rem; /* py-8 px-4 */
+	padding: 2rem 1rem;
 }
 
+/* Spezifische Stile für die Chat-Liste-Seite, wenn der Benutzer nicht authentifiziert ist */
 .chat-list-page--unauthenticated {
 	text-align: center;
 }
 
+/* Titel der Chat-Liste-Seite */
 .chat-list-page__title {
-	font-size: 1.875rem; /* text-3xl */
-	font-weight: 700; /* font-bold */
-	margin-bottom: 2rem; /* mb-8 */
+	font-size: 1.875rem;
+	font-weight: 700;
+	margin-bottom: 2rem;
 	text-align: center;
 }
 
+/* Nachricht, wenn keine Chats vorhanden sind oder der Benutzer sich anmelden muss */
 .chat-list-page__empty-message,
 .auth-prompt__message {
-	/* Стиль для повідомлення про необхідність входу */
 	text-align: center;
-	color: #6b7280; /* text-gray-500 */
+	color: #6b7280;
 	margin-top: 1rem;
 }
 
-/* Контейнер для списку чатів */
+/* Container für die Liste der einzelnen Chat-Einträge */
 .chat-list {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem; /* space-y-4 */
-	max-width: 42rem; /* max-w-2xl */
+	gap: 1rem;
+	max-width: 42rem;
 	margin-left: auto;
 	margin-right: auto;
 }
 
-/* Елемент списку чатів (посилання) */
+/* Einzelner Eintrag (Link) in der Chat-Liste */
 .chat-item {
 	display: block;
-	padding: 1rem; /* p-4 */
-	background-color: #ffffff; /* bg-white */
-	border-radius: 0.5rem; /* rounded-lg */
+	padding: 1rem;
+	background-color: #ffffff;
+	border-radius: 0.5rem;
 	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-		0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+		0 2px 4px -1px rgba(0, 0, 0, 0.06);
 	text-decoration: none;
 	color: inherit;
 	transition: box-shadow 0.2s ease-in-out;
@@ -241,72 +255,74 @@
 
 .chat-item:hover {
 	box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-		0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+		0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-/* Вміст елемента чату (flex-контейнер) */
+/* Flex-Container für den Inhalt eines Chat-Eintrags (Avatar, Details, Zeitstempel) */
 .chat-item__content {
 	display: flex;
 	align-items: center;
-	gap: 1rem; /* space-x-4 */
+	gap: 1rem;
 }
 
-/* Контейнер для аватара */
+/* Container für den Avatar im Chat-Eintrag */
 .chat-item__avatar-container {
-	flex-shrink: 0; /* Щоб не стискався */
+	flex-shrink: 0;
 }
 
-/* Аватар */
+/* Avatar im Chat-Eintrag */
 .chat-item__avatar {
-	border-radius: 50%; /* rounded-full */
-	/* object-fit: cover; -- задано inline */
+	border-radius: 50%;
 }
 
-/* Заглушка для аватара */
+/* Platzhalter für den Avatar, falls kein Bild vorhanden ist */
 .chat-item__avatar-placeholder {
-	width: 50px; /* w-12 (48px) або 50px, як у вас було */
-	height: 50px; /* h-12 (48px) або 50px */
+	width: 50px;
+	height: 50px;
 	border-radius: 50%;
-	background-color: #d1d5db; /* bg-gray-300 */
+	background-color: #d1d5db;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
+/* Initialen im Avatar-Platzhalter */
 .avatar-placeholder__initials {
-	font-size: 1.25rem; /* text-xl */
-	color: #6b7280; /* text-gray-500 */
+	font-size: 1.25rem;
+	color: #6b7280;
 }
 
-/* Блок з текстовими деталями чату */
+/* Container für textuelle Details im Chat-Eintrag (Name, letzte Nachricht) */
 .chat-item__details {
-	flex-grow: 1; /* Займає доступний простір */
-	min-width: 0; /* Важливо для роботи truncate (обрізання тексту) */
+	flex-grow: 1;
+	min-width: 0;
 }
 
+/* Name des Chatpartners im Chat-Eintrag */
 .chat-item__participant-name {
-	font-size: 1.125rem; /* text-lg */
-	font-weight: 600; /* font-semibold */
-	color: #1f2937; /* text-gray-800 */
-	white-space: nowrap; /* Запобігає переносу рядка */
-	overflow: hidden; /* Приховує текст, що не вміщується */
-	text-overflow: ellipsis; /* Додає три крапки */
-}
-
-.chat-item__last-message {
-	font-size: 0.875rem; /* text-sm */
-	color: #6b7280; /* text-gray-500 */
+	font-size: 1.125rem;
+	font-weight: 600;
+	color: #1f2937;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	margin-top: 0.125rem; /* Невеликий відступ */
 }
 
-/* Час останнього повідомлення */
+/* Letzte Nachricht im Chat-Eintrag */
+.chat-item__last-message {
+	font-size: 0.875rem;
+	color: #6b7280;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	margin-top: 0.125rem;
+}
+
+/* Zeitstempel der letzten Nachricht im Chat-Eintrag */
 .chat-item__timestamp {
-	font-size: 0.75rem; /* text-xs */
-	color: #9ca3af; /* text-gray-400 */
-	white-space: nowrap; /* Запобігає переносу */
-	margin-left: auto; /* Притискає до правого краю, якщо потрібно */
-	flex-shrink: 0; /* Щоб не стискався */
+	font-size: 0.75rem;
+	color: #9ca3af;
+	white-space: nowrap;
+	margin-left: auto;
+	flex-shrink: 0;
 }

@@ -5,28 +5,28 @@ import prisma from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-// Імпорт Prisma з @prisma/client більше не потрібен для визначення MessageWithAuthor,
-// якщо ми визначаємо його поля явно.
-// import { Prisma } from '@prisma/client';
 
-// Тип для автора, який буде включено в повідомлення
 interface MessageAuthor {
 	id: string;
 	name: string | null;
 	image: string | null;
 }
 
-// Тип для повідомлення, яке повертається клієнту
 export interface ReturnedMessage {
 	id: string;
 	content: string;
-	createdAt: string; // Будемо повертати як ISO рядок
-	authorId: string | null; // <--- ЗМІНА ТУТ: тепер string | null
+	createdAt: string;
+	authorId: string | null;
 	chatId: string;
-	author: MessageAuthor | null; // <--- ЗМІНА ТУТ: тепер MessageAuthor | null
-	isSystemMessage?: boolean | null; // Додаємо, щоб відповідати Message
+	author: MessageAuthor | null;
+	isSystemMessage?: boolean | null;
 }
 
+/**
+ * Sucht einen vorhandenen Chat zwischen dem aktuellen Benutzer und einem anderen Benutzer
+ * oder erstellt einen neuen Chat, falls keiner existiert, und leitet dann zu diesem Chat weiter.
+ * @param receiverId Die ID des Benutzers, mit dem ein Chat gestartet oder gefunden werden soll.
+ */
 export async function createOrFindChatAndRedirect(
 	receiverId: string
 ): Promise<void> {
@@ -101,33 +101,32 @@ type SendMessageFormState = {
 	newMessage?: ReturnedMessage;
 } | null;
 
-// Явно визначаємо тип MessageWithAuthor на основі моделі Message з schema.prisma
-// та того, що повертає include: { author: ... }
 interface MessageWithAuthor {
 	id: string;
 	content: string;
-	createdAt: Date; // З schema.prisma: DateTime -> Date
-	authorId: string | null; // З schema.prisma: String?
-	chatId: string; // З schema.prisma: String
-	isSystemMessage: boolean | null; // З schema.prisma: Boolean?
+	createdAt: Date;
+	authorId: string | null;
+	chatId: string;
+	isSystemMessage: boolean | null;
 	author: {
-		// Відповідає include: { author: { select: { id, name, image } } }
 		id: string;
 		name: string | null;
 		image: string | null;
-	} | null; // author може бути null, якщо authorId є null (для системних повідомлень)
+	} | null;
 }
 
+/**
+ * Sendet eine Nachricht in einem bestimmten Chat.
+ * @param chatId Die ID des Chats, in dem die Nachricht gesendet wird.
+ * @param prevState Der vorherige Status des Formulars (für useFormState).
+ * @param formData Die Formulardaten, die die Nachricht enthalten.
+ * @returns Ein Objekt, das den Status der Operation und gegebenenfalls die neue Nachricht oder Fehler enthält.
+ */
 export async function sendMessage(
 	chatId: string,
 	prevState: SendMessageFormState,
 	formData: FormData
 ): Promise<SendMessageFormState> {
-	// console.log(
-	// 	`--- sendMessage Server Action CALLED for chatId: ${chatId} at ${new Date().toISOString()} ---`
-	// );
-	// console.log('Form Data Content:', formData.get('content'));
-
 	const session = await auth();
 	if (!session?.user?.id) {
 		return { status: 'error', message: 'Nicht autorisiert.' };
@@ -170,17 +169,16 @@ export async function sendMessage(
 				data: {
 					content,
 					chatId,
-					authorId: currentUserId, // Завжди встановлюємо authorId
-					isSystemMessage: false, // Це не системне повідомлення
+					authorId: currentUserId,
+					isSystemMessage: false,
 				},
 				include: {
 					author: {
-						// Завжди включаємо автора
 						select: { id: true, name: true, image: true },
 					},
 				},
 			});
-			createdMessage = result as MessageWithAuthor; // Приведення типу
+			createdMessage = result as MessageWithAuthor;
 
 			await tx.chat.update({
 				where: { id: chatId },
@@ -207,14 +205,11 @@ export async function sendMessage(
 			id: createdMessage.id,
 			content: createdMessage.content,
 			createdAt: createdMessage.createdAt.toISOString(),
-			authorId: createdMessage.authorId, // Тут буде string, оскільки ми його встановили
+			authorId: createdMessage.authorId,
 			chatId: createdMessage.chatId,
-			author: createdMessage.author, // createdMessage.author тут не буде null
+			author: createdMessage.author,
 			isSystemMessage: createdMessage.isSystemMessage ?? false,
 		};
-		// console.log(
-		// 	`--- sendMessage Server Action SUCCESS for chatId: ${chatId} ---`
-		// );
 
 		return {
 			status: 'success',
@@ -235,7 +230,10 @@ export async function sendMessage(
 	}
 }
 
-// Оновлена Server Action для отримання кількості непрочитаних повідомлень
+/**
+ * Ruft die Anzahl der ungelesenen Nachrichten für den aktuellen Benutzer ab.
+ * @returns Eine Promise, die die Gesamtzahl der ungelesenen Nachrichten auflöst.
+ */
 export async function getUnreadMessageCount(): Promise<number> {
 	const session = await auth();
 	if (!session?.user?.id) {
@@ -244,12 +242,11 @@ export async function getUnreadMessageCount(): Promise<number> {
 	const currentUserId = session.user.id;
 
 	try {
-		// Отримуємо всі чати, в яких користувач є учасником
 		const participations = await prisma.chatParticipant.findMany({
 			where: { userId: currentUserId },
 			select: {
 				chatId: true,
-				lastReadAt: true, // Час, коли користувач востаннє читав цей чат
+				lastReadAt: true,
 			},
 		});
 
@@ -259,18 +256,15 @@ export async function getUnreadMessageCount(): Promise<number> {
 
 		let totalUnreadCount = 0;
 
-		// Для кожного чату, в якому бере участь користувач, рахуємо непрочитані повідомлення
 		for (const participation of participations) {
 			const unreadMessagesInChat = await prisma.message.count({
 				where: {
 					chatId: participation.chatId,
 					authorId: {
-						not: currentUserId, // Повідомлення від інших користувачів
+						not: currentUserId,
 					},
 					createdAt: {
-						// Повідомлення, створені ПІСЛЯ того, як користувач востаннє читав цей чат
-						// Якщо lastReadAt є null, то всі повідомлення від інших вважаються непрочитаними
-						gt: participation.lastReadAt || new Date(0), // new Date(0) - дуже стара дата
+						gt: participation.lastReadAt || new Date(0),
 					},
 				},
 			});
@@ -283,11 +277,15 @@ export async function getUnreadMessageCount(): Promise<number> {
 			'Fehler beim Abrufen der Anzahl ungelesener Nachrichten:',
 			error
 		);
-		return 0; // Повертаємо 0 у разі помилки
+		return 0;
 	}
 }
 
-// --- НОВА SERVER ACTION ДЛЯ ПОЗНАЧКИ ЧАТУ ЯК ПРОЧИТАНОГО ---
+/**
+ * Markiert einen Chat für den aktuellen Benutzer als gelesen, indem das Feld `lastReadAt` aktualisiert wird.
+ * @param chatId Die ID des Chats, der als gelesen markiert werden soll.
+ * @returns Ein Objekt, das den Erfolg der Operation anzeigt oder einen Fehler enthält.
+ */
 export async function markChatAsRead(
 	chatId: string
 ): Promise<{ success: boolean; error?: string }> {
@@ -302,23 +300,16 @@ export async function markChatAsRead(
 		await prisma.chatParticipant.update({
 			where: {
 				userId_chatId: {
-					// Використовуємо унікальний складений ключ
 					userId: currentUserId,
 					chatId,
 				},
 			},
 			data: {
-				lastReadAt: new Date(), // Встановлюємо поточний час
+				lastReadAt: new Date(),
 			},
 		});
-		// Після позначки чату як прочитаного, потрібно оновити дані,
-		// які залежать від кількості непрочитаних повідомлень, наприклад, хедер.
-		revalidatePath('/'); // Головна сторінка (якщо хедер там)
-		revalidatePath('/chat'); // Сторінка списку чатів
-		// Якщо у вас є інші сторінки, де відображається лічильник, їх теж потрібно ревалідувати.
-		// Або, що краще, ревалідувати сам компонент хедера, якщо це можливо (залежить від архітектури)
-		// Для простоти, поки що ревалідуємо головну.
-		// console.log(`Chat ${chatId} marked as read for user ${currentUserId}`);
+		revalidatePath('/');
+		revalidatePath('/chat');
 		return { success: true };
 	} catch (error) {
 		console.error(
@@ -340,6 +331,12 @@ type GetOlderMessagesResponse = {
 	hasMore: boolean;
 };
 
+/**
+ * Ruft ältere Nachrichten für einen bestimmten Chat ab, basierend auf einem Cursor für die Paginierung.
+ * @param chatId Die ID des Chats, aus dem Nachrichten abgerufen werden sollen.
+ * @param cursor Die ID der Nachricht, ab der ältere Nachrichten geladen werden sollen (optional).
+ * @returns Ein Objekt, das die abgerufenen Nachrichten, den nächsten Cursor und einen booleschen Wert enthält, der angibt, ob weitere Nachrichten vorhanden sind.
+ */
 export async function getOlderMessages(
 	chatId: string,
 	cursor?: string | null
@@ -395,7 +392,6 @@ export async function getOlderMessages(
 				content: msg.content,
 				createdAt: msg.createdAt.toISOString(),
 				authorId: msg.authorId,
-				// Перевіряємо, чи автор існує, особливо для системних повідомлень
 				author: msg.author
 					? {
 							id: msg.author.id,

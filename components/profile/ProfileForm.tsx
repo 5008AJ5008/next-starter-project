@@ -8,7 +8,6 @@ import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import type { ChangeEvent } from 'react';
 
-// Тип для даних користувача
 type UserProfileData = {
 	name: string | null;
 	birthDate: Date | null;
@@ -18,20 +17,22 @@ type UserProfileData = {
 	image?: string | null;
 };
 
-// Тип для стану форми оновлення профілю
 type UpdateFormState = {
 	message: string;
 	status: 'success' | 'error';
 } | null;
 
-// Тип для стану форми завантаження фото
 type UploadFormState = {
 	message: string;
 	status: 'success' | 'error';
 	imageUrl?: string | null;
 } | null;
 
-// Компонент кнопки для основної форми
+/**
+ * Eine Absende-Schaltfläche für das Formular zur Profilaktualisierung.
+ * Zeigt einen Ladezustand an ("Speichern..."), während die Server-Aktion ausgeführt wird.
+ * @returns JSX.Element - Die Absende-Schaltfläche für Profildaten.
+ */
 function SubmitProfileButton() {
 	const { pending } = useFormStatus();
 	return (
@@ -45,7 +46,13 @@ function SubmitProfileButton() {
 	);
 }
 
-// Компонент кнопки для форми завантаження фото
+/**
+ * Eine Absende-Schaltfläche für das Formular zum Hochladen von Profilfotos.
+ * Zeigt einen Ladezustand an ("Hochladen..."), während die Server-Aktion ausgeführt wird.
+ * @param {{ disabled?: boolean }} props - Eigenschaften für die Schaltfläche.
+ * @param {boolean} [props.disabled] - Deaktiviert die Schaltfläche zusätzlich zum Ladezustand.
+ * @returns JSX.Element - Die Absende-Schaltfläche für das Profilfoto.
+ */
 function SubmitPhotoButton({ disabled }: { disabled?: boolean }) {
 	const { pending } = useFormStatus();
 	return (
@@ -59,7 +66,15 @@ function SubmitPhotoButton({ disabled }: { disabled?: boolean }) {
 	);
 }
 
-// Основний компонент форми
+/**
+ * Stellt ein Formular zur Bearbeitung von Benutzerprofildaten und zum Hochladen eines Profilbildes dar.
+ * Enthält zwei separate Formulare für die Aktualisierung von Textdaten und das Hochladen von Bildern.
+ * Zeigt Erfolgs- oder Fehlermeldungen nach Server-Aktionen zeitgesteuert an.
+ * Validiert die Dateigröße und den Dateityp für das hochgeladene Bild.
+ * @param {{ user: UserProfileData }} props - Die Eigenschaften für die Komponente.
+ * @param {UserProfileData} props.user - Die initialen Profildaten des Benutzers.
+ * @returns JSX.Element - Die Komponente mit den Profilbearbeitungsformularen.
+ */
 export function ProfileForm({ user }: { user: UserProfileData }) {
 	const [updateFormState, updateFormAction] = useActionState<
 		UpdateFormState,
@@ -74,39 +89,41 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 	const [fileError, setFileError] = useState<string | null>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
-	// Стани для відображення повідомлень з таймером
 	const [displayUpdateMessage, setDisplayUpdateMessage] =
 		useState<UpdateFormState>(null);
 	const [displayUploadMessage, setDisplayUploadMessage] =
 		useState<UploadFormState>(null);
 
-	const MESSAGE_TIMEOUT_MS = 5000; // 5 секунд
+	const MESSAGE_TIMEOUT_MS = 5000;
 
-	// useEffect для повідомлення про оновлення профілю
 	useEffect(() => {
 		if (updateFormState?.message) {
 			setDisplayUpdateMessage(updateFormState);
 			const timer = setTimeout(() => {
 				setDisplayUpdateMessage(null);
 			}, MESSAGE_TIMEOUT_MS);
-			return () => clearTimeout(timer); // Очищення таймера при розмонтуванні або повторному виклику
+			return () => clearTimeout(timer);
 		}
-	}, [updateFormState]); // Залежність від updateFormState
+	}, [updateFormState]);
 
-	// useEffect для повідомлення про завантаження фото
 	useEffect(() => {
 		if (uploadFormState?.message) {
 			setDisplayUploadMessage(uploadFormState);
 			const timer = setTimeout(() => {
 				setDisplayUploadMessage(null);
 			}, MESSAGE_TIMEOUT_MS);
-			return () => clearTimeout(timer); // Очищення таймера
+			return () => clearTimeout(timer);
 		}
-	}, [uploadFormState]); // Залежність від uploadFormState
+	}, [uploadFormState]);
 
 	const MAX_FILE_SIZE_MB = 5;
 	const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
+	/**
+	 * Behandelt Änderungen an der Dateiauswahl für das Profilbild.
+	 * Validiert Dateigröße und -typ und aktualisiert den Zustand entsprechend.
+	 * @param {ChangeEvent<HTMLInputElement>} event - Das Änderungsereignis des Datei-Eingabefelds.
+	 */
 	const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (file) {
@@ -136,6 +153,11 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 		}
 	};
 
+	/**
+	 * Formatiert ein Datumsobjekt in einen String im Format YYYY-MM-DD für das Datums-Eingabefeld.
+	 * @param {Date | null} date - Das zu formatierende Datumsobjekt.
+	 * @returns {string} Das formatierte Datum als String oder ein leerer String, wenn das Datum null ist.
+	 */
 	const formatDateForInput = (date: Date | null): string => {
 		if (!date) return '';
 		const year = date.getFullYear();
@@ -207,7 +229,6 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						)}
 					</div>
 				</div>
-				{/* Відображаємо displayUploadMessage замість uploadFormState */}
 				{displayUploadMessage?.message && (
 					<p
 						className={`mt-2 text-sm ${
@@ -259,19 +280,18 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						htmlFor="gender"
 						className="block text-sm font-medium text-gray-700"
 					>
-						Geschlecht {/* Стать */}
+						Geschlecht
 					</label>
 					<select
 						id="gender"
 						name="gender"
-						defaultValue={user.gender ?? ''} // Встановлюємо поточне значення
+						defaultValue={user.gender ?? ''}
 						className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
 					>
 						<option value="">Bitte wählen...</option>{' '}
-						{/* Будь ласка, виберіть... */}
-						<option value="weiblich">Weiblich</option> {/* Жіноча */}
-						<option value="männlich">Männlich</option> {/* Чоловіча */}
-						<option value="divers">Divers</option> {/* Інша/Різна */}
+						<option value="weiblich">Weiblich</option>
+						<option value="männlich">Männlich</option>
+						<option value="divers">Divers</option>
 					</select>
 				</div>
 				<div>
@@ -308,7 +328,6 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 				</div>
 				<div>
 					<SubmitProfileButton />
-					{/* Відображаємо displayUpdateMessage замість updateFormState */}
 					{displayUpdateMessage?.message && (
 						<p
 							className={`mt-2 text-sm ${

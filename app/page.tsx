@@ -1,21 +1,19 @@
 import type { Metadata } from 'next';
-import { auth } from '@/auth'; // Функція для отримання сесії
-import prisma from '@/lib/prisma'; // Ваш Prisma Client
+import { auth } from '@/auth';
+import prisma from '@/lib/prisma';
 import Image from 'next/image';
 import SignIn from '@/components/Auth/SignIn';
 import Link from 'next/link';
-import UserFilters from '@/components/filters/UserFilters'; // Переконайтеся, що шлях правильний
-import LikeButton from '@/components/likes/LikeButton'; // Переконайтеся, що шлях правильний
-import { hasUserLiked } from '@/actions/likeActions'; // Переконайтеся, що шлях правильний
+import UserFilters from '@/components/filters/UserFilters';
+import LikeButton from '@/components/likes/LikeButton';
+import { hasUserLiked } from '@/actions/likeActions';
 
 export const metadata: Metadata = {
-	title: 'Next Starter', // Оновлений заголовок для головної
+	title: 'Next Starter',
 };
 
-// Оновлюємо тип для HomePageProps, щоб searchParams був Promise
 type HomePageProps = {
 	searchParams?: Promise<{
-		// searchParams тепер є Promise
 		city?: string;
 		minAge?: string;
 		maxAge?: string;
@@ -23,15 +21,22 @@ type HomePageProps = {
 	}>;
 };
 
-// Допоміжна функція для розрахунку дати народження на основі віку
+/**
+ * Hilfsfunktion zur Berechnung des Geburtsdatums basierend auf einem Alter.
+ * @param age Das Alter in Jahren.
+ * @returns Das berechnete Geburtsdatum.
+ */
 function getDateFromAge(age: number): Date {
 	const today = new Date();
-	// Віднімаємо вік від поточного року, місяць і день залишаємо поточними
-	// Це дасть нам дату, коли людина святкувала свій останній день народження цього року або минулого
 	today.setFullYear(today.getFullYear() - age);
 	return today;
 }
 
+/**
+ * Stellt die Hauptseite der Anwendung dar, die Benutzerprofile basierend auf Filterkriterien anzeigt.
+ * @param props Die Eigenschaften der Komponente, einschließlich Suchparameter.
+ * @returns JSX-Element, das die Homepage anzeigt.
+ */
 export default async function HomePage({
 	searchParams: searchParamsPromise,
 }: HomePageProps) {
@@ -39,15 +44,11 @@ export default async function HomePage({
 	const currentUserId = session?.user?.id;
 	const isAuthenticated = Boolean(session?.user);
 
-	// Очікуємо searchParams, якщо вони є
 	const searchParams = searchParamsPromise ? await searchParamsPromise : {};
 
-	// Ініціалізуємо andConditions як any[], щоб уникнути локальних помилок TypeScript
-	// при додаванні об'єктів з різними ключами, та проблем з Vercel.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const andConditions: any[] = [];
 
-	// Додаємо базові умови для image
 	andConditions.push({ image: { not: null } });
 	andConditions.push({ image: { not: '' } });
 
@@ -64,7 +65,6 @@ export default async function HomePage({
 		andConditions.push({ gender: searchParams.gender });
 	}
 
-	// Обробка фільтрації за віком
 	const minAge = searchParams?.minAge
 		? parseInt(searchParams.minAge, 10)
 		: null;
@@ -93,16 +93,15 @@ export default async function HomePage({
 		});
 	}
 
-	// whereClause тепер також не має явної анотації типу Prisma.UserWhereInput
 	const whereClause = {
 		NOT: {
 			id: currentUserId || undefined,
 		},
-		AND: andConditions.length > 0 ? andConditions : undefined, // Передаємо AND тільки якщо є умови
+		AND: andConditions.length > 0 ? andConditions : undefined,
 	};
 
 	const users = await prisma.user.findMany({
-		where: whereClause, // Prisma Client має прийняти цей об'єкт, якщо він структурно правильний
+		where: whereClause,
 		select: {
 			id: true,
 			image: true,
@@ -116,7 +115,6 @@ export default async function HomePage({
 		take: 50,
 	});
 
-	// 2. Отримуємо стани лайків для всіх відображених користувачів (якщо поточний користувач авторизований)
 	const likedStates: Record<string, boolean> = {};
 	if (isAuthenticated && currentUserId) {
 		for (const user of users) {
@@ -127,7 +125,6 @@ export default async function HomePage({
 	return (
 		<main className="default-layout">
 			<div className="container mx-auto px-4 py-8">
-				{/* 4. Додаємо компонент фільтрів */}
 				<UserFilters />
 				{!isAuthenticated && (
 					<div className="willkommen">
@@ -137,7 +134,6 @@ export default async function HomePage({
 							zu sehen und zu interagieren.
 						</p>
 						<div className="signin-button">
-							{/* Ваш компонент SignIn, як ви вказали в попередньому коді */}
 							<SignIn />
 						</div>
 					</div>
@@ -154,20 +150,14 @@ export default async function HomePage({
 
 				<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
 					{users.map((user) => {
-						// Розрахунок віку більше не потрібен, оскільки текстові деталі не відображаються
-						// const age = isAuthenticated ? calculateAge(user.birthDate) : null;
-
-						// Вміст картки користувача (фото)
 						const userCardContent = (
 							<div
 								className="relative w-full"
-								style={{ position: 'relative', paddingTop: '100%' }} // Квадратне співвідношення сторін
+								style={{ position: 'relative', paddingTop: '100%' }}
 							>
 								{user.image ? (
 									<Image
 										src={user.image}
-										// alt текст тепер залежить від isAuthenticated та наявності user.name
-										// Потрібно переконатися, що user.name завантажується, якщо isAuthenticated
 										alt={
 											isAuthenticated && user.name
 												? `Profilbild von ${user.name}`
@@ -176,20 +166,18 @@ export default async function HomePage({
 										fill
 										style={{ objectFit: 'cover' }}
 										sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-										className="transition-transform duration-300 group-hover:scale-110" // Ефект при наведенні
+										className="transition-transform duration-300 group-hover:scale-110"
 									/>
 								) : (
 									<div className="absolute inset-0 bg-gray-300 flex items-center justify-center">
 										<span className="text-gray-500">Kein Bild</span>
 									</div>
 								)}
-								{/* 3. Додаємо кнопку LikeButton поверх зображення (тільки для авторизованих) */}
 								{isAuthenticated &&
 									currentUserId &&
 									currentUserId !== user.id && (
 										<div className="like-button-container-on-image">
 											{' '}
-											{/* Позиціонування кнопки */}
 											<LikeButton
 												likedUserId={user.id}
 												initialIsLiked={likedStates[user.id] || false}
@@ -205,9 +193,7 @@ export default async function HomePage({
 								key={user.id}
 								className="bg-white rounded-lg shadow-lg overflow-hidden transform transition-all hover:scale-105 group"
 							>
-								{/* --- ЗМІНИ ТУТ --- */}
 								{isAuthenticated ? (
-									// Для авторизованих користувачів фото є посиланням
 									<Link
 										href={`/users/${user.id}`}
 										aria-label={
@@ -219,10 +205,8 @@ export default async function HomePage({
 										{userCardContent}
 									</Link>
 								) : (
-									// Для неавторизованих користувачів фото не є посиланням
 									userCardContent
 								)}
-								{/* --- КІНЕЦЬ ЗМІН --- */}
 							</div>
 						);
 					})}
@@ -231,6 +215,3 @@ export default async function HomePage({
 		</main>
 	);
 }
-///////////////////////////////////
-////////////////////////////////////
-//////////////////////////////////

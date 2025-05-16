@@ -1,37 +1,44 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { toggleBookmark } from '@/actions/bookmarkActions'; // Переконайтеся, що шлях правильний
-import { FaStar, FaRegStar } from 'react-icons/fa'; // Іконки зірочок з react-icons
+import { toggleBookmark } from '@/actions/bookmarkActions';
+import { FaStar, FaRegStar } from 'react-icons/fa';
 
 type BookmarkButtonProps = {
 	bookmarkedUserId: string;
 	initialIsBookmarked: boolean;
-	currentUserId?: string; // ID поточного авторизованого користувача
+	currentUserId?: string;
 };
 
+/**
+ * Stellt eine Schaltfläche zum Hinzufügen oder Entfernen eines Lesezeichens für ein Benutzerprofil dar.
+ * Verwendet optimistisches Update für eine reaktionsschnelle Benutzeroberfläche und zeigt einen Ladezustand an.
+ * Die Schaltfläche wird nicht angezeigt, wenn der aktuelle Benutzer das eigene Profil betrachtet oder nicht angemeldet ist.
+ *
+ * @param {BookmarkButtonProps} props - Die Eigenschaften für die Komponente.
+ * @param {string} props.bookmarkedUserId - Die ID des Benutzers, dessen Profil mit einem Lesezeichen versehen werden soll.
+ * @param {boolean} props.initialIsBookmarked - Der anfängliche Lesezeichenstatus.
+ * @param {string} [props.currentUserId] - Die ID des aktuell angemeldeten Benutzers.
+ * @returns JSX.Element | null - Die Lesezeichen-Schaltfläche oder null, wenn sie nicht angezeigt werden soll.
+ */
 export default function BookmarkButton({
 	bookmarkedUserId,
 	initialIsBookmarked,
 	currentUserId,
 }: BookmarkButtonProps) {
 	const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
-	const [isPending, startTransition] = useTransition(); // Для оптимістичного оновлення та індикації завантаження
+	const [isPending, startTransition] = useTransition();
 
-	// Не показуємо кнопку, якщо це профіль самого користувача або користувач не авторизований
 	if (!currentUserId || currentUserId === bookmarkedUserId) {
 		return null;
 	}
 
 	const handleToggleBookmark = async () => {
 		startTransition(async () => {
-			// Оптимістичне оновлення UI
 			setIsBookmarked(!isBookmarked);
 			const response = await toggleBookmark(bookmarkedUserId);
 			if (!response.success) {
-				// Якщо сталася помилка, повертаємо попередній стан
 				setIsBookmarked(isBookmarked);
-				// Тут можна показати повідомлення про помилку користувачеві
 				console.error(
 					response.error || 'Fehler beim Umschalten des Lesezeichens.'
 				);
@@ -40,13 +47,9 @@ export default function BookmarkButton({
 						'Aktion fehlgeschlagen. Bitte versuchen Sie es erneut.'
 				);
 			} else {
-				// Оновлюємо стан на основі відповіді сервера, якщо потрібно
-				// У нашому випадку, оптимістичне оновлення вже зробило це,
-				// але можна перевірити response.isBookmarked
 				if (typeof response.isBookmarked === 'boolean') {
 					setIsBookmarked(response.isBookmarked);
 				}
-				// console.log(response.message);
 			}
 		});
 	};
@@ -55,7 +58,6 @@ export default function BookmarkButton({
 		<button
 			onClick={handleToggleBookmark}
 			disabled={isPending}
-			// Додайте ваші CSS класи для кнопки
 			className="bookmark-button p-2 rounded-full hover:bg-gray-200 disabled:opacity-50"
 			aria-label={
 				isBookmarked ? 'Aus Lesezeichen entfernen' : 'Zu Lesezeichen hinzufügen'
@@ -65,11 +67,11 @@ export default function BookmarkButton({
 			}
 		>
 			{isPending ? (
-				<span className="loading-spinner"></span> // Додайте CSS для спінера завантаження
+				<span className="loading-spinner"></span>
 			) : isBookmarked ? (
-				<FaStar size={24} className="text-yellow-500" /> // Заповнена зірочка
+				<FaStar size={24} className="text-yellow-500" />
 			) : (
-				<FaRegStar size={24} className="text-gray-500" /> // Порожня зірочка
+				<FaRegStar size={24} className="text-gray-500" />
 			)}
 		</button>
 	);

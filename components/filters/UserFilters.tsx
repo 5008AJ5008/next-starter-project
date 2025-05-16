@@ -2,15 +2,22 @@
 
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation'; // Для навігації та читання поточних параметрів
-// Іконка для кнопки фільтрів, наприклад
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FaFilter } from 'react-icons/fa';
 
+/**
+ * Stellt eine Benutzeroberfläche zum Filtern von Benutzerprofilen bereit.
+ * Ermöglicht das Filtern nach Stadt, Mindest-/Höchstalter und Geschlecht.
+ * Die Filterwerte werden aus den aktuellen URL-Suchparametern initialisiert und
+ * bei Anwendung oder Zurücksetzung über den Next.js Router aktualisiert.
+ * Die Filter erscheinen in einem aufklappbaren Menü.
+ *
+ * @returns JSX.Element - Die Filterkomponente für Benutzer.
+ */
 export default function UserFilters() {
 	const router = useRouter();
-	const searchParams = useSearchParams(); // Отримуємо поточні параметри пошуку
+	const searchParams = useSearchParams();
 
-	// Стани для значень фільтрів, ініціалізуємо з поточних URL параметрів
 	const [city, setCity] = useState(searchParams.get('city') || '');
 	const [minAge, setMinAge] = useState(searchParams.get('minAge') || '');
 	const [maxAge, setMaxAge] = useState(searchParams.get('maxAge') || '');
@@ -18,6 +25,12 @@ export default function UserFilters() {
 
 	const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
 
+	/**
+	 * Behandelt das Absenden des Filterformulars.
+	 * Erstellt eine neue URL mit den aktuellen Filterparametern und navigiert dorthin.
+	 * Schließt das Filtermenü nach der Anwendung.
+	 * @param {FormEvent<HTMLFormElement>} event - Das Formular-Absendeereignis.
+	 */
 	const handleApplyFilters = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		const params = new URLSearchParams();
@@ -27,41 +40,37 @@ export default function UserFilters() {
 		if (maxAge) params.set('maxAge', maxAge);
 		if (gender) params.set('gender', gender);
 
-		// Переходимо на головну сторінку з новими параметрами фільтрації
-		// Якщо параметрів немає, рядок запиту буде порожнім, що скине фільтри
 		router.push(`/?${params.toString()}`);
-		setIsFilterMenuOpen(false); // Закриваємо меню після застосування
+		setIsFilterMenuOpen(false);
 	};
 
+	/**
+	 * Setzt alle Filterwerte zurück und navigiert zur Hauptseite ohne Suchparameter.
+	 * Schließt das Filtermenü nach dem Zurücksetzen.
+	 */
 	const handleResetFilters = () => {
 		setCity('');
 		setMinAge('');
 		setMaxAge('');
 		setGender('');
-		router.push('/'); // Переходимо на головну без параметрів
+		router.push('/');
 		setIsFilterMenuOpen(false);
 	};
 
 	return (
 		<div className="user-filters-container relative mb-4">
 			{' '}
-			{/* Ваш CSS клас */}
 			<button
 				onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
-				className="user-filters-button" // Ваш CSS клас для кнопки
+				className="user-filters-button"
 				aria-expanded={isFilterMenuOpen}
 				aria-controls="filter-menu"
 			>
-				<FaFilter className="mr-2" /> {/* Іконка */}
-				Filter {/* Або інший текст */}
+				<FaFilter className="mr-2" />
+				Filter
 			</button>
 			{isFilterMenuOpen && (
-				<div
-					id="filter-menu"
-					className="user-filters-dropdown" // Ваш CSS клас для випадаючого меню
-					// Стилі для позиціонування та вигляду мають бути в CSS
-					// Наприклад: position: absolute; top: 100%; left: 0; background-color: white; padding: 1rem; border: 1px solid #ccc; z-index: 10;
-				>
+				<div id="filter-menu" className="user-filters-dropdown">
 					<form onSubmit={handleApplyFilters} className="space-y-4">
 						<div>
 							<label
@@ -75,7 +84,7 @@ export default function UserFilters() {
 								id="filter-city"
 								value={city}
 								onChange={(e) => setCity(e.target.value)}
-								className="filter-input" // Ваш CSS клас
+								className="filter-input"
 								placeholder="z.B. Berlin"
 							/>
 						</div>
@@ -94,7 +103,7 @@ export default function UserFilters() {
 									value={minAge}
 									onChange={(e) => setMinAge(e.target.value)}
 									min="18"
-									className="filter-input" // Ваш CSS клас
+									className="filter-input"
 									placeholder="18"
 								/>
 							</div>
@@ -111,7 +120,7 @@ export default function UserFilters() {
 									value={maxAge}
 									onChange={(e) => setMaxAge(e.target.value)}
 									min="18"
-									className="filter-input" // Ваш CSS клас
+									className="filter-input"
 									placeholder="99"
 								/>
 							</div>
@@ -128,7 +137,7 @@ export default function UserFilters() {
 								id="filter-gender"
 								value={gender}
 								onChange={(e) => setGender(e.target.value)}
-								className="filter-select" // Ваш CSS клас
+								className="filter-select"
 							>
 								<option value="">Alle</option>
 								<option value="männlich">Männlich</option>
@@ -140,7 +149,6 @@ export default function UserFilters() {
 						<div className="flex justify-between">
 							<button type="submit" className="filter-button-apply">
 								{' '}
-								{/* Ваш CSS клас */}
 								Filter anwenden
 							</button>
 							<button
@@ -149,7 +157,6 @@ export default function UserFilters() {
 								className="filter-button-reset"
 							>
 								{' '}
-								{/* Ваш CSS клас */}
 								Zurücksetzen
 							</button>
 						</div>

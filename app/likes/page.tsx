@@ -6,10 +6,14 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
-	title: 'Wem du gefällst', // Кому ти подобаєшся / Хто тебе лайкнув
+	title: 'Wem du gefällst',
 };
 
-// Допоміжна функція для розрахунку віку (можна винести в окремий файл utils)
+/**
+ * Berechnet das Alter einer Person anhand ihres Geburtsdatums.
+ * @param birthDate Das Geburtsdatum der Person. Kann null sein.
+ * @returns Das Alter in Jahren oder null, wenn kein Geburtsdatum angegeben ist.
+ */
 function calculateAge(birthDate: Date | null): number | null {
 	if (!birthDate) return null;
 	const today = new Date();
@@ -25,6 +29,12 @@ function calculateAge(birthDate: Date | null): number | null {
 	return age;
 }
 
+/**
+ * Stellt die Seite "Wem du gefällst" dar.
+ * Zeigt eine Liste der Benutzer an, die den aktuell authentifizierten Benutzer geliked haben.
+ * Leitet nicht authentifizierte Benutzer zur Anmeldeseite weiter.
+ * @returns JSX-Element, das die Seite mit den erhaltenen Likes anzeigt.
+ */
 export default async function LikesPage() {
 	const session = await auth();
 
@@ -34,27 +44,23 @@ export default async function LikesPage() {
 
 	const currentUserId = session.user.id;
 
-	// Отримуємо лайки, де поточний користувач є 'likedUserId' (тобто його лайкнули)
-	// Включаємо дані про користувача, який поставив лайк ('liker')
 	const likesReceived = await prisma.photoLike.findMany({
 		where: {
 			likedUserId: currentUserId,
 		},
 		include: {
 			liker: {
-				// Включаємо дані користувача, який поставив лайк
 				select: {
 					id: true,
 					name: true,
 					image: true,
 					city: true,
 					birthDate: true,
-					// Додайте інші поля, які хочете відображати
 				},
 			},
 		},
 		orderBy: {
-			createdAt: 'desc', // Показуємо новіші лайки першими
+			createdAt: 'desc',
 		},
 	});
 
@@ -67,7 +73,6 @@ export default async function LikesPage() {
 			{likers.length === 0 && (
 				<p className="text-center text-gray-500">
 					Du hast noch keine Likes erhalten.{' '}
-					{/* Ви ще не отримали жодного лайка. */}
 				</p>
 			)}
 
@@ -76,7 +81,6 @@ export default async function LikesPage() {
 					if (!user) return null;
 					const age = calculateAge(user.birthDate);
 					return (
-						// Картка користувача (схожа на ту, що на головній сторінці або /users)
 						<div
 							key={user.id}
 							className="bg-white rounded-lg shadow-lg overflow-hidden transform transition-all hover:scale-105 group"
@@ -87,7 +91,7 @@ export default async function LikesPage() {
 							>
 								<div
 									className="relative w-full"
-									style={{ position: 'relative', paddingTop: '100%' }} // Квадратне співвідношення сторін
+									style={{ position: 'relative', paddingTop: '100%' }}
 								>
 									{user.image ? (
 										<Image
@@ -115,8 +119,6 @@ export default async function LikesPage() {
 								{user.city && (
 									<p className="text-sm text-gray-600 truncate">{user.city}</p>
 								)}
-								{/* Тут можна додати інформацію про те, коли цей користувач вас лайкнув,
-                    або кнопку для переходу в чат, якщо є метч */}
 							</div>
 						</div>
 					);

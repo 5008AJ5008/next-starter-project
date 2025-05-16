@@ -14,9 +14,9 @@ export interface Author {
 export interface Message {
 	id: string;
 	content: string;
-	createdAt: string; // Зберігаємо як рядок
-	authorId: string | null; // <--- ВАЖЛИВО: має бути string | null
-	author: Author | null; // <--- ВАЖЛИВО: має бути Author | null
+	createdAt: string;
+	authorId: string | null;
+	author: Author | null;
 	chatId: string;
 	isSystemMessage?: boolean | null;
 }
@@ -32,6 +32,18 @@ type ChatInterfaceProps = {
 	otherParticipant: Author | null;
 };
 
+/**
+ * Stellt die Benutzeroberfläche für einen Chat dar.
+ * Beinhaltet das Anzeigen von Nachrichten, das Senden neuer Nachrichten,
+ * automatisches Scrollen, Markieren des Chats als gelesen und Long-Polling für neue Nachrichten.
+ *
+ * @param {ChatInterfaceProps} props - Die Eigenschaften für die Komponente.
+ * @param {Message[]} props.initialMessages - Die anfänglich zu ladenden Nachrichten.
+ * @param {string} props.chatId - Die ID des aktuellen Chats.
+ * @param {string} props.currentUserId - Die ID des aktuell angemeldeten Benutzers.
+ * @param {Author | null} props.otherParticipant - Die Informationen zum anderen Chat-Teilnehmer.
+ * @returns JSX.Element - Die Chat-Oberfläche.
+ */
 export default function ChatInterface({
 	initialMessages,
 	chatId,
@@ -45,6 +57,9 @@ export default function ChatInterface({
 		undefined
 	);
 
+	/**
+	 * Scrollt das Nachrichtenfenster zum untersten Punkt.
+	 */
 	const scrollToBottom = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 	};
@@ -56,30 +71,25 @@ export default function ChatInterface({
 	useEffect(() => {
 		scrollToBottom();
 	}, [messages]);
-	/////////////////////////////
-	//////////////////////////////
-	// Обгортаємо handleNewMessageFromForm у useCallback
+
+	/**
+	 * Callback-Funktion, die aufgerufen wird, wenn eine neue Nachricht über das Formular gesendet wird.
+	 * Fügt die neue Nachricht zum Nachrichten-State hinzu, falls sie noch nicht vorhanden ist.
+	 */
 	const handleNewMessageFromForm = useCallback((newMessage: Message) => {
 		setMessages((prevMessages) => {
-			// Перевіряємо, чи повідомлення вже існує, щоб уникнути дублікатів
-			// Це може бути важливо, якщо і Long Polling, і onMessageSent можуть додати те саме повідомлення
 			if (!prevMessages.find((msg) => msg.id === newMessage.id)) {
 				return [...prevMessages, newMessage];
 			}
 			return prevMessages;
 		});
-	}, []); // setMessages є стабільною функцією, тому масив залежностей порожній
+	}, []);
 
-	// 2. useEffect для позначки чату як прочитаного при завантаженні
 	useEffect(() => {
 		if (chatId && currentUserId) {
-			// Викликаємо Server Action для оновлення lastReadAt
-			// Ми не обробляємо результат тут, оскільки це фонова дія
 			markChatAsRead(chatId).then((response) => {
 				if (response.success) {
-					// console.log(`Chat ${chatId} successfully marked as read on client.`);
-					// Тут можна було б ініціювати оновлення лічильника в хедері,
-					// але revalidatePath в Server Action має це зробити для наступних завантажень.
+					// Log or state update if needed on successful mark as read
 				} else {
 					console.error(
 						`Failed to mark chat ${chatId} as read:`,
@@ -88,23 +98,18 @@ export default function ChatInterface({
 				}
 			});
 		}
-		// Цей ефект має виконатися тільки один раз при монтуванні компонента для даного чату
-	}, [chatId, currentUserId]); // Запускається, коли chatId або currentUserId змінюються (або при першому рендері)
+	}, [chatId, currentUserId]);
 
-	// Оновлюємо pollingFunctionRef, коли змінюються залежності, які вона використовує
 	useEffect(() => {
 		pollingFunctionRef.current = async () => {
 			if (isLoading) return;
 			setIsLoading(true);
 
-			const currentMessages = messages;
+			const currentMessages = messages; // Capture current messages state for this poll request
 			const lastTimestamp =
 				currentMessages.length > 0
 					? currentMessages[currentMessages.length - 1].createdAt
 					: new Date(0).toISOString();
-			// console.log(
-			// 	`[User: ${currentUserId}] Polling for chat ${chatId} with lastTimestamp: ${lastTimestamp}`
-			// );
 
 			try {
 				const response = await fetch(
@@ -124,10 +129,6 @@ export default function ChatInterface({
 				} else {
 					const data = (await response.json()) as PollResponse;
 					if (data.messages && data.messages.length > 0) {
-						// console.log(
-						// 	`[User: ${currentUserId}] Polled new messages for chat ${chatId}:`,
-						// 	data.messages
-						// );
 						setMessages((prevMessages) => {
 							const uniqueNewMessages = data.messages.filter(
 								(newMessagePolled) =>
@@ -159,10 +160,8 @@ export default function ChatInterface({
 				setIsLoading(false);
 			}
 		};
-		// Залежності для оновлення pollingFunctionRef:
-	}, [chatId, messages, isLoading, currentUserId, otherParticipant]); // otherParticipant тут, якщо він використовується для логування всередині
+	}, [chatId, messages, isLoading, currentUserId, otherParticipant]);
 
-	// useEffect для запуску та рекурсивного виклику polling
 	useEffect(() => {
 		let isActive = true;
 		let timeoutId: NodeJS.Timeout;
@@ -173,32 +172,26 @@ export default function ChatInterface({
 				await pollingFunctionRef.current();
 			}
 			if (isActive) {
-				timeoutId = setTimeout(executePoll, 2000); // Інтервал між запитами
+				timeoutId = setTimeout(executePoll, 2000);
 			}
 		};
 
 		if (chatId) {
-			// Запускаємо polling тільки якщо є chatId
 			const initialPollTimeoutId = setTimeout(() => {
 				if (isActive) executePoll();
-			}, 500); // Невеликий таймаут перед першим запуском
+			}, 500);
 			return () => {
 				clearTimeout(initialPollTimeoutId);
 				isActive = false;
 				clearTimeout(timeoutId);
-				// console.log(
-				// 	`[User: ${currentUserId}] Polling stopped for chat ${chatId}.`
-				// ); // Оновлено лог
 			};
 		}
 
 		return () => {
-			// Функція очищення, якщо chatId не було
 			isActive = false;
 			clearTimeout(timeoutId);
 		};
-		// Змінено масив залежностей: тепер тільки chatId
-	}, [chatId, currentUserId]); // currentUserId додано для логування в cleanup
+	}, [chatId, currentUserId]);
 
 	return (
 		<div className="chat-interface-wrapper">
@@ -228,7 +221,6 @@ export default function ChatInterface({
 				)}
 				{messages.map((message) => {
 					const isOwnMessage = message.authorId === currentUserId;
-					// Безпечний доступ до властивостей автора
 					const authorName = message.author?.name || 'System';
 					const authorImage = message.author?.image;
 
@@ -249,7 +241,6 @@ export default function ChatInterface({
 								isOwnMessage ? 'message-row--own' : 'message-row--other'
 							}`}
 						>
-							{/* Перевіряємо authorImage перед використанням */}
 							{!isOwnMessage && authorImage && (
 								<Image
 									src={authorImage}
@@ -279,7 +270,6 @@ export default function ChatInterface({
 									})}
 								</p>
 							</div>
-							{/* Перевіряємо authorImage перед використанням */}
 							{isOwnMessage && authorImage && (
 								<Image
 									src={authorImage}
@@ -305,5 +295,3 @@ export default function ChatInterface({
 		</div>
 	);
 }
-//////////////////
-/////////////////

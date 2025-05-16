@@ -5,12 +5,7 @@ import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { put, del, list } from '@vercel/blob';
 import { revalidatePath } from 'next/cache';
-// import { signOut } from '@/auth';
-// import { redirect } from 'next/navigation';
 
-// --- Типи стану для відповідей ---
-
-// Тип для стану форми оновлення текстових даних
 type UpdateFormState = {
 	message: string;
 	status: 'success' | 'error';
@@ -21,16 +16,12 @@ type DeleteAccountResponse = {
 	error?: string;
 };
 
-// Тип для стану форми завантаження фото
 type UploadState = {
 	message: string;
 	status: 'success' | 'error';
 	imageUrl?: string | null;
 } | null;
 
-// --- Server Action для оновлення текстових даних профілю ---
-
-// Схема валідації для даних форми профілю
 const profileSchema = z.object({
 	name: z
 		.string()
@@ -51,7 +42,12 @@ const profileSchema = z.object({
 	aboutMe: z.string().max(50, 'Text zu lang').optional().or(z.literal('')),
 });
 
-// Переконайтеся, що ця функція експортована!
+/**
+ * Aktualisiert die Profildaten des aktuell angemeldeten Benutzers.
+ * @param prevState Der vorherige Zustand des Formulars.
+ * @param formData Die Formulardaten mit den zu aktualisierenden Profilinformationen.
+ * @returns Ein Objekt, das den Status der Aktualisierung und eine Nachricht enthält.
+ */
 export async function updateProfile(
 	prevState: UpdateFormState,
 	formData: FormData
@@ -89,7 +85,6 @@ export async function updateProfile(
 		});
 
 		revalidatePath('/profile/edit');
-		// revalidatePath('/profile'); // Якщо є сторінка перегляду
 
 		return { message: 'Profil erfolgreich aktualisiert.', status: 'success' };
 	} catch (error) {
@@ -101,12 +96,13 @@ export async function updateProfile(
 	}
 }
 
-// --- Server Action для завантаження фото профілю ---
-
-// Схема валідації для файлу (можна залишити простою)
-// const fileSchema = z.instanceof(File);
-
-// Переконайтеся, що ця функція також експортована!
+/**
+ * Lädt ein Profilfoto für den aktuell angemeldeten Benutzer hoch und aktualisiert das Benutzerprofil.
+ * Löscht das alte Foto, falls vorhanden.
+ * @param prevState Der vorherige Zustand des Formulars.
+ * @param formData Die Formulardaten, die das neue Profilbild enthalten.
+ * @returns Ein Objekt, das den Status des Uploads, eine Nachricht und optional die URL des neuen Bildes enthält.
+ */
 export async function uploadProfilePhoto(
 	prevState: UploadState,
 	formData: FormData
@@ -189,6 +185,11 @@ export async function uploadProfilePhoto(
 	}
 }
 
+/**
+ * Löscht das Konto des aktuell angemeldeten Benutzers einschließlich aller zugehörigen Daten
+ * wie Chats, Nachrichten und hochgeladene Dateien.
+ * @returns Ein Objekt, das den Erfolg der Operation anzeigt oder einen Fehler enthält.
+ */
 export async function deleteCurrentUserAccount(): Promise<DeleteAccountResponse> {
 	const session = await auth();
 
@@ -200,9 +201,7 @@ export async function deleteCurrentUserAccount(): Promise<DeleteAccountResponse>
 	const userId = session.user.id;
 
 	try {
-		// Використовуємо транзакцію, щоб усі операції були атомарними
 		await prisma.$transaction(async (tx) => {
-			// 1. Знайти всі ID чатів, в яких користувач є учасником
 			const userChatParticipations = await tx.chatParticipant.findMany({
 				where: { userId },
 				select: { chatId: true },
@@ -211,73 +210,48 @@ export async function deleteCurrentUserAccount(): Promise<DeleteAccountResponse>
 			const chatIdsToDelete = userChatParticipations.map((p) => p.chatId);
 
 			if (chatIdsToDelete.length > 0) {
-				// 2. Видалити записи ChatParticipant для цих чатів (каскадно видалить повідомлення, якщо налаштовано)
-				// Prisma автоматично видалить ChatParticipant, коли видаляється Chat або User через onDelete: Cascade
-				// Але ми видаляємо самі чати, що також призведе до видалення ChatParticipant та Message через каскад.
-
-				// Видалити всі повідомлення в цих чатах (якщо немає onDelete: Cascade від Chat до Message)
-				// Насправді, onDelete: Cascade від Chat до Message вже має це зробити.
-				// await tx.message.deleteMany({
-				//   where: { chatId: { in: chatIdsToDelete } },
-				// });
-
-				// Видалити всіх учасників цих чатів (якщо немає onDelete: Cascade від Chat до ChatParticipant)
-				// onDelete: Cascade від Chat до ChatParticipant вже має це зробити.
-				// await tx.chatParticipant.deleteMany({
-				//   where: { chatId: { in: chatIdsToDelete } },
-				// });
-
-				// 3. Видалити самі чати
 				await tx.chat.deleteMany({
 					where: { id: { in: chatIdsToDelete } },
 				});
 				console.log(
-					`Чати ${chatIdsToDelete.join(
+					`Chats ${chatIdsToDelete.join(
 						', '
-					)} видалено для користувача ${userId}.`
+					)} wurden für Benutzer ${userId} gelöscht.`
 				);
 			}
 
-			// 4. (Опціонально, але рекомендовано) Видалити файли користувача з Vercel Blob
 			try {
 				const userBlobs = await list({ prefix: `user-photos/${userId}/` });
 				for (const blob of userBlobs.blobs) {
 					await del(blob.url);
 					console.log(
-						`Файл ${blob.pathname} видалено з Vercel Blob для користувача ${userId}.`
+						`Datei ${blob.pathname} wurde aus Vercel Blob für Benutzer ${userId} gelöscht.`
 					);
 				}
 			} catch (blobError) {
 				console.error(
-					`Помилка при видаленні файлів з Vercel Blob для користувача ${userId}:`,
+					`Fehler beim Löschen von Dateien aus Vercel Blob für Benutzer ${userId}:`,
 					blobError
 				);
-				// Вирішіть, чи має ця помилка переривати весь процес видалення.
-				// Для навчального проекту можна продовжити, але залогувати.
 			}
 
-			// 5. Видалити самого користувача
-			// Це також каскадно видалить пов'язані Account, Session (якщо вони ще є)
-			// та ChatParticipant (якщо вони не були видалені раніше через видалення Chat)
 			await tx.user.delete({
 				where: { id: userId },
 			});
-			console.log(`Профіль користувача ${userId} успішно видалено.`);
+			console.log(`Benutzerprofil ${userId} erfolgreich gelöscht.`);
 		});
 
-		// Ревалідація шляхів, де можуть відображатися дані користувача або списки
-		revalidatePath('/'); // Головна сторінка
-		revalidatePath('/chat'); // Сторінка списку чатів
-		// Додайте інші шляхи за потреби
+		revalidatePath('/');
+		revalidatePath('/chat');
 
 		return { success: true };
 	} catch (error) {
-		console.error('Помилка при видаленні профілю користувача:', error);
+		console.error('Fehler beim Löschen des Benutzerprofils:', error);
 		const errorMessage =
-			error instanceof Error ? error.message : 'Невідома помилка.';
+			error instanceof Error ? error.message : 'Unbekannter Fehler.';
 		return {
 			success: false,
-			error: `Помилка при видаленні профілю: ${errorMessage}`,
+			error: `Fehler beim Löschen des Profils: ${errorMessage}`,
 		};
 	}
 }

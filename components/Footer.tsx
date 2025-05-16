@@ -1,16 +1,12 @@
-// import { auth } from '@/auth';
-// import SignIn from './Auth/SignIn';
-// import User from './Auth/User';
-// import { SignOut } from './Auth/SignOut';
-
+/**
+ * Stellt die Fußzeile der Webseite dar.
+ * Zeigt das aktuelle Jahr und Copyright-Informationen an.
+ * @returns JSX-Element, das die Fußzeile der Seite anzeigt.
+ */
 export default async function Footer() {
-	// const session = await auth();
-
 	return (
 		<footer className="site-footer">
 			<small>&copy; {new Date().getFullYear()}</small>
-			{/* {session ? <SignOut /> : <SignIn />}
-			{session && <User {...session.user} />} */}
 		</footer>
 	);
 }

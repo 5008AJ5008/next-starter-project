@@ -1,16 +1,17 @@
+// Definiert den Prisma Client Generator und den Ausgabeort.
 generator client {
   provider = "prisma-client-js"
-  // Переконайтеся, що цей шлях правильний для вашої структури проекту
   output   = "../lib/generated/prisma"
 }
 
+// Definiert die Datenquelle und die Verbindungs-URLs zur PostgreSQL-Datenbank.
 datasource db {
   provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
-// Моделі для автентифікації через NextAuth.js з PrismaAdapter
+// Modell für Benutzerkonten, die von Authentifizierungsanbietern stammen (z.B. Google).
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -30,6 +31,7 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
+// Modell für Benutzersitzungen (Sessions).
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
@@ -38,32 +40,31 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Оновлена модель користувача для Badoo-прототипу
+// Modell, das einen Benutzer der Anwendung repräsentiert.
 model User {
   id            String    @id @default(cuid())
-  name          String? // Ім'я (з Google або введене користувачем)
+  name          String?
   email         String?   @unique
   emailVerified DateTime?
-  image         String? // URL основного фото профілю
-  birthDate     DateTime? // Дата народження (для розрахунку віку)
-  gender        String? // Стать (можна зробити Enum пізніше)
-  aboutMe       String?   @db.Text // Коротко про себе (замість bio)
-  city          String? // Місто проживання
+  image         String?
+  birthDate     DateTime?
+  gender        String?
+  aboutMe       String?   @db.Text
+  city          String?
 
-  // Зв'язки для NextAuth
   accounts     Account[]
   sessions     Session[]
   chats        ChatParticipant[]
   sentMessages Message[]         @relation("SentMessages")
 
-  // Зв'язки для закладок
-  bookmarksMade Bookmark[] @relation("BookmarkedBy") // Закладки, які зробив цей користувач
-  bookmarkedFor Bookmark[] @relation("BookmarkedUser") // Закладки, де цього користувача додали
+  bookmarksMade Bookmark[] @relation("BookmarkedBy")
+  bookmarkedFor Bookmark[] @relation("BookmarkedUser")
 
   likesGiven    PhotoLike[] @relation("LikedBy")
   likesReceived PhotoLike[] @relation("PhotoLiked")
 }
 
+// Modell für Verifizierungstokens (z.B. für E-Mail-Bestätigung).
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -72,81 +73,60 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Модель для представлення чату/розмови
+// Modell, das eine Chat-Konversation zwischen Benutzern repräsentiert.
 model Chat {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt // Оновлюється при новому повідомленні
-
-  // Учасники цього чату (зв'язок багато-до-багатьох через ChatParticipant)
+  id           String            @id @default(cuid())
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
   participants ChatParticipant[]
-  // Повідомлення в цьому чаті
   messages     Message[]
 }
 
-// Проміжна модель для зв'язку багато-до-багатьох між User та Chat
+// Zwischenmodell, das die Viele-zu-Viele-Beziehung zwischen User und Chat abbildet.
+// Speichert auch, wann ein Benutzer einen Chat zuletzt gelesen hat.
 model ChatParticipant {
-  id     String @id @default(cuid())
-  userId String
-  chatId String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
-
-  // Нове поле для відстеження, коли користувач востаннє читав цей чат
+  id         String    @id @default(cuid())
+  userId     String
+  chatId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat       Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
   lastReadAt DateTime?
 
-  @@unique([userId, chatId]) // Користувач може бути учасником чату тільки один раз
+  @@unique([userId, chatId])
 }
 
-// Модель для представлення окремого повідомлення
+// Modell, das eine einzelne Nachricht innerhalb eines Chats repräsentiert.
 model Message {
-  id        String   @id @default(cuid())
-  content   String   @db.Text // Вміст повідомлення
-  createdAt DateTime @default(now())
-
-  // Автор повідомлення
-  authorId String?
-  author   User?   @relation("SentMessages", fields: [authorId], references: [id], onDelete: Cascade)
-
-  // Чат, до якого належить повідомлення
-  chatId String
-  chat   Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
-
-  // Можна додати статус (наприклад, "прочитано"), якщо потрібно
-  // isRead Boolean @default(false)
-  // Нове поле для позначення системних повідомлень
+  id              String   @id @default(cuid())
+  content         String   @db.Text
+  createdAt       DateTime @default(now())
+  authorId        String?
+  author          User?    @relation("SentMessages", fields: [authorId], references: [id], onDelete: Cascade)
+  chatId          String
+  chat            Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
   isSystemMessage Boolean? @default(false)
 }
 
-// --- НОВА МОДЕЛЬ ДЛЯ ЗАКЛАДОК ---
+// Modell für Lesezeichen, die ein Benutzer für das Profil eines anderen Benutzers setzt.
 model Bookmark {
-  id String @id @default(cuid())
-
-  // Користувач, який зробив закладку
-  bookmarkerId String
-  bookmarker   User   @relation("BookmarkedBy", fields: [bookmarkerId], references: [id], onDelete: Cascade)
-
-  // Користувач, якого додали в закладки
+  id               String   @id @default(cuid())
+  bookmarkerId     String
+  bookmarker       User     @relation("BookmarkedBy", fields: [bookmarkerId], references: [id], onDelete: Cascade)
   bookmarkedUserId String
-  bookmarkedUser   User   @relation("BookmarkedUser", fields: [bookmarkedUserId], references: [id], onDelete: Cascade)
+  bookmarkedUser   User     @relation("BookmarkedUser", fields: [bookmarkedUserId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
 
-  createdAt DateTime @default(now())
-
-  // Унікальна комбінація: один користувач може додати іншого в закладки тільки один раз
   @@unique([bookmarkerId, bookmarkedUserId])
 }
 
+// Modell für "Likes", die ein Benutzer für das Profil/Foto eines anderen Benutzers vergibt.
 model PhotoLike {
-  id String @id @default(cuid())
-
-  likerId String
-  liker   User   @relation("LikedBy", fields: [likerId], references: [id], onDelete: Cascade)
-
+  id          String   @id @default(cuid())
+  likerId     String
+  liker       User     @relation("LikedBy", fields: [likerId], references: [id], onDelete: Cascade)
   likedUserId String
-  likedUser   User   @relation("PhotoLiked", fields: [likedUserId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
+  likedUser   User     @relation("PhotoLiked", fields: [likedUserId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 
   @@unique([likerId, likedUserId])
 }

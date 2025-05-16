@@ -1,25 +1,28 @@
 import MainNavigation from './MainNavigation';
-import { auth } from '@/auth'; // Розкоментуйте, щоб отримати сесію
+import { auth } from '@/auth';
 import { getUnreadMessageCount } from '@/actions/chatActions';
 
+/**
+ * Stellt die Kopfzeile der Webseite dar.
+ * Ruft die aktuelle Benutzersitzung und die Anzahl ungelesener Nachrichten ab
+ * und übergibt diese Informationen an die Hauptnavigationskomponente.
+ * @returns JSX-Element, das die Kopfzeile der Seite anzeigt.
+ */
 export default async function Header() {
-	const session = await auth(); // Отримуємо сесію
+	const session = await auth();
 
 	let unreadMessages = 0;
 
-	// 2. Викликаємо Server Action, якщо користувач авторизований
 	if (session?.user?.id) {
 		unreadMessages = await getUnreadMessageCount();
 	}
 
 	return (
 		<header className="site-header">
-			{/* Передаємо актуальний стан авторизації та дані користувача */}
 			<MainNavigation
 				isLoggedIn={Boolean(session)}
 				userName={session?.user?.name ?? null}
 				userImage={session?.user?.image ?? null}
-				// 3. Передаємо кількість непрочитаних повідомлень
 				unreadMessageCount={unreadMessages}
 			/>
 		</header>
