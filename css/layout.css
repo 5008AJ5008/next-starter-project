@@ -37,6 +37,7 @@ body {
 	padding-right: 0px;
 	display: flex;
 	justify-content: space-around;
+	width: 100%;
 	.site-header__title {
 		font-family: var(--font-karla);
 		font-size: 3rem;

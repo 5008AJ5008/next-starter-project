@@ -113,6 +113,9 @@ a {
 	font-size: 30px;
 	font-style: italic;
 	font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+	@media (max-width: 700px) {
+		display: none;
+	}
 }
 .main-navigation__link {
 	color: gray;
