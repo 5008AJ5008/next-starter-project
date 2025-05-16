@@ -16,6 +16,17 @@ body {
 }
 
 .site-header {
+	background: linear-gradient(
+		to right,
+		#fbc2eb,
+		#a6c1ee
+	); /* рожево-блакитний перелив */
+	color: #333;
+	padding: 1rem 2rem;
+	color: white;
+	padding: 1rem 2rem;
+	color: white;
+	padding: 1rem 2rem;
 	color: var(--heading-color);
 	display: flex;
 	align-items: center;
@@ -24,6 +35,8 @@ body {
 	margin-right: 0px;
 	padding-left: 0px;
 	padding-right: 0px;
+	display: flex;
+	justify-content: space-around;
 	.site-header__title {
 		font-family: var(--font-karla);
 		font-size: 3rem;
@@ -87,4 +100,19 @@ main {
 		minmax(min(var(--grid-min-width, 15rem), 100%), 1fr)
 	);
 	gap: var(--grid-gap, 1rem);
+}
+.grund-text {
+	text-align: center;
+}
+.willkommen {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.willkommen-text {
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+.signin-button {
+	margin: 5px;
 }

@@ -1,5 +1,5 @@
 a {
-	color: var(--link-color);
+	/* color: var(--link-color); */
 	&:hover,
 	&:focus-visible {
 		color: var(--active-link-color);
@@ -21,10 +21,14 @@ a {
 		align-items: center;
 		font-size: 1rem;
 		padding: 0.25rem 0.5rem;
-		background-color: var(--honeydew);
-		color: var(--link-color);
+		/* background-color: var(--honeydew); */
+		background-color: var(--blue-12);
+		/* color: var(--link-color); */
+		color: white;
 		box-shadow: var(--shadow-4);
 		border: 1px solid black;
+		border-radius: 10px;
+		/* margin-bottom: 10px; */
 		svg {
 			width: 1.5rem;
 			height: 1.5rem;
@@ -40,7 +44,8 @@ a {
 		flex-direction: column;
 		align-items: center;
 		list-style: none;
-		background-color: palegoldenrod;
+		/* background-color: palegoldenrod; */
+		background-color: rgba(0, 255, 242, 0.774);
 		gap: 0.5em;
 		padding: var(--size-fluid-3);
 		margin: 0;
@@ -51,7 +56,7 @@ a {
 		/* width: 100vw; */
 		padding-left: 0px;
 		padding-right: 0px;
-		margin-top: 32px;
+		margin-top: 15px;
 	}
 
 	.main-navigation__link {
@@ -62,12 +67,21 @@ a {
 		&[aria-current='page'],
 		&:hover,
 		&:focus {
-			color: var(--black);
+			color: white;
+			/* color: black; */
 		}
 	}
 }
 .main-navigation__logo {
 	margin-left: 20px;
+	color: white;
+	text-decoration: none;
+	background: linear-gradient(to right, #ff6a00, #ee0979);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	font-size: 35px;
+	font-style: italic;
+	font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
 }
 .user-info {
 	margin-right: 20px;
@@ -75,6 +89,7 @@ a {
 
 .unread-messages-button {
 	margin: 10px;
+	color: white;
 }
 .avatar-container {
 	width: 32px;
@@ -87,8 +102,25 @@ a {
 .user-greeting {
 	margin-right: 1rem; /* аналог mr-4 */
 	font-size: 0.875rem; /* аналог text-sm */
+	color: black;
 }
 .user-actions-container {
 	display: flex;
 	align-items: center;
+	margin-right: 1%;
+}
+.site-nav__tagline {
+	font-size: 30px;
+	font-style: italic;
+	font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
+.main-navigation__link {
+	color: gray;
+}
+.button-delete-profile {
+	background-color: red;
+	color: black;
+}
+.button-delete-profile:hover {
+	color: gray;
 }

@@ -149,8 +149,14 @@ export default function MainNavigation({
 				{/* Логотип (посилання на головну) */}
 				<Link href="/" className="main-navigation__logo" onClick={closeMenu}>
 					{/* Замініть "Logo" на ваш <Image /> компонент або SVG */}
-					Badoo-Clone
+					Amoria
 				</Link>
+				<div className="site-nav__center-content">
+					{' '}
+					{/* Новий блок з новим класом */}
+					<span className="site-nav__tagline">Liebe beginnt hier</span>{' '}
+					{/* Новий клас */}
+				</div>
 
 				<div className="user-actions-container">
 					{' '}
@@ -228,7 +234,7 @@ export default function MainNavigation({
 								{/* Новий пункт "Profil löschen" */}
 								<li key="deleteprofile" className="border-t border-gray-200">
 									<button
-										className="main-navigation__link main-navigation__link--button w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center" // Стилі для небезпечної дії
+										className="button-delete-profile" // Стилі для небезпечної дії
 										onClick={handleDeleteProfileClick}
 									>
 										<CgTrash className="mr-2" />

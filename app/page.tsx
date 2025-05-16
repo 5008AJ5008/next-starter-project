@@ -130,24 +130,20 @@ export default async function HomePage({
 				{/* 4. Додаємо компонент фільтрів */}
 				<UserFilters />
 				{!isAuthenticated && (
-					<div className="text-center mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-						<h1 className="text-2xl font-semibold text-blue-700">
-							Willkommen!
-						</h1>
-						<p className="text-blue-600 mt-2">
+					<div className="willkommen">
+						<h1 className="willkommen-text">Willkommen!</h1>
+						<p className="grund-text">
 							Entdecke Profile und verbinde dich. Melde dich an, um mehr Details
 							zu sehen und zu interagieren.
 						</p>
-						<div className="mt-4">
+						<div className="signin-button">
 							{/* Ваш компонент SignIn, як ви вказали в попередньому коді */}
 							<SignIn />
 						</div>
 					</div>
 				)}
 				{isAuthenticated && (
-					<h1 className="text-3xl font-bold mb-8 text-center">
-						Entdecke andere Profile
-					</h1>
+					<h1 className="grund-text">Entdecke andere Profile</h1>
 				)}
 
 				{users.length === 0 && (

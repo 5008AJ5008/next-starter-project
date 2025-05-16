@@ -79,6 +79,7 @@
 .filter-button-apply,
 .filter-button-reset {
 	padding: 0.5rem 1rem;
+	padding: 5px;
 	border-radius: 0.25rem;
 	cursor: pointer;
 	font-weight: 500;
