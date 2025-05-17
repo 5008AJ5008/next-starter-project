@@ -1,0 +1,229 @@
+/* Container für die verschiedenen Abschnitte des Profils */
+.profile-sections-container {
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+	font-family: sans-serif;
+	max-width: 700px;
+	margin: 20px auto;
+	padding: 20px;
+}
+
+/* Allgemeine Stile für Profilformulare */
+.profile-form {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 24px;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	background-color: #f9fafb;
+	box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Stile für die Titel von Formularen */
+.form-title {
+	font-size: 1.125rem;
+	font-weight: 500;
+	color: #1f2937;
+	margin-bottom: 8px;
+}
+
+/* Bereich für das Hochladen von Fotos */
+.photo-upload-area {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+
+/* Wrapper für das Profilbild */
+.profile-image-wrapper {
+	flex-shrink: 0;
+}
+
+/* Stile für das Profilbild */
+.profile-image {
+	width: 80px;
+	height: 80px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+/* Stile für den Platzhalter, wenn kein Profilbild vorhanden ist */
+.profile-image-placeholder {
+	width: 80px;
+	height: 80px;
+	border-radius: 50%;
+	background-color: #d1d5db;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.875rem;
+	color: #6b7280;
+}
+
+/* Bereich für das Datei-Eingabefeld und den Upload-Button */
+.photo-input-section {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+/* Allgemeine Stile für Formularbeschriftungen (Labels) */
+.form-label {
+	display: block;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: #374151;
+	margin-bottom: 4px;
+}
+
+/* Gruppe für das Datei-Eingabefeld und den dazugehörigen Button */
+.file-input-group {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	@media (max-width: 601px) {
+		flex-direction: column;
+	}
+}
+
+/* Stile für das Datei-Eingabefeld */
+.file-input {
+	display: block;
+	width: 100%;
+	font-size: 0.875rem;
+	color: #6b7280;
+}
+
+/* Stile für den Button des Datei-Eingabefelds (::file-selector-button) */
+.file-input::file-selector-button {
+	margin-right: 16px;
+	padding: 8px 16px;
+	border-radius: 6px;
+	border: 0;
+	font-size: 0.875rem;
+	font-weight: 600;
+	background-color: #eff6ff;
+	color: #2563eb;
+	cursor: pointer;
+	transition: background-color 0.2s ease-in-out;
+}
+
+.file-input::file-selector-button:hover {
+	background-color: #dbeafe;
+}
+
+/* Allgemeine Stile für Hinweistexte unter Formularfeldern */
+.form-hint {
+	margin-top: 4px;
+	font-size: 0.75rem;
+}
+
+/* Standard-Hinweistext */
+.form-hint-default {
+	color: #4b5563;
+}
+
+/* Fehlertext unter Formularfeldern */
+.form-error-text {
+	color: #dc2626;
+}
+
+/* Stile für Statusnachrichten (Erfolg/Fehler) nach Formularaktionen */
+.form-message {
+	margin-top: 8px;
+	font-size: 0.875rem;
+	padding: 8px 12px;
+	border-radius: 4px;
+}
+
+/* Erfolgsmeldung */
+.form-message-success {
+	color: #059669;
+	background-color: #d1fae5;
+	border: 1px solid #6ee7b7;
+}
+
+/* Fehlermeldung */
+.form-message-error {
+	color: #dc2626;
+	background-color: #fee2e2;
+	border: 1px solid #fca5a5;
+}
+
+/* Allgemeine Stile für Texteingabefelder, Select-Felder und Textareas */
+.form-input {
+	margin-top: 4px;
+	display: block;
+	width: 100%;
+	padding: 10px 12px;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	font-size: 0.875rem;
+	color: #1f2937;
+	background-color: #ffffff;
+	box-sizing: border-box;
+}
+
+.form-input:focus {
+	outline: none;
+	border-color: #2563eb;
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.form-input::placeholder {
+	color: #9ca3af;
+}
+
+/* Spezifische Stile für Select-Felder (Dropdowns) */
+.form-select {
+	appearance: none;
+	background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+	background-position: right 0.5rem center;
+	background-repeat: no-repeat;
+	background-size: 1.5em 1.5em;
+	padding-right: 2.5rem;
+}
+
+/* Spezifische Stile für Textareas */
+.form-textarea {
+	min-height: 80px;
+	resize: vertical;
+}
+
+/* Allgemeine Stile für Absende-Buttons in Formularen */
+button[type='submit'],
+.submit-button {
+	padding: 10px 20px;
+	background-color: #2563eb;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	font-size: 0.875rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.2s ease-in-out;
+	margin-top: 8px;
+}
+
+button[type='submit']:hover,
+.submit-button:hover {
+	background-color: #1d4ed8;
+}
+
+button[type='submit']:disabled,
+.submit-button:disabled {
+	background-color: #9ca3af;
+	cursor: not-allowed;
+}
+
+/* Stile zur Strukturierung der Felder im Formular für Profilinformationen */
+.profile-info-form > div {
+	margin-bottom: 16px;
+}
+.profile-info-form > div:last-child {
+	margin-bottom: 0;
+}

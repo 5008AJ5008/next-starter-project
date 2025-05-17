@@ -175,37 +175,34 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 	}
 
 	return (
-		<div className="space-y-8">
+		<div className="profile-sections-container">
 			<form
 				action={uploadFormAction}
-				className="space-y-4 p-4 border border-gray-200 rounded-md bg-gray-50"
+				className="profile-form photo-upload-form"
 			>
-				<h2 className="text-lg font-medium">Profilbild ändern</h2>
-				<div className="flex items-center space-x-4">
-					<div className="flex-shrink-0">
+				<h2 className="form-title">Profilbild ändern</h2>
+				<div className="photo-upload-area">
+					<div className="profile-image-wrapper">
 						{user.image || uploadFormState?.imageUrl ? (
 							<Image
 								src={uploadFormState?.imageUrl ?? user.image!}
 								alt="Aktuelles Profilbild"
 								width={80}
 								height={80}
-								className="rounded-full object-cover"
+								className="profile-image"
 								key={uploadFormState?.imageUrl ?? user.image}
 							/>
 						) : (
-							<div className="w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center text-gray-500">
+							<div className="profile-image-placeholder">
 								<span>Kein Bild</span>
 							</div>
 						)}
 					</div>
-					<div className="flex-grow">
-						<label
-							htmlFor="profileImage"
-							className="block text-sm font-medium text-gray-700 mb-1"
-						>
+					<div className="photo-input-section">
+						<label htmlFor="profileImage" className="form-label">
 							Neues Foto auswählen (max. {MAX_FILE_SIZE_MB}MB)
 						</label>
-						<div className="flex items-center">
+						<div className="file-input-group">
 							<input
 								type="file"
 								id="profileImage"
@@ -213,28 +210,28 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 								accept="image/*"
 								onChange={handleFileChange}
 								ref={fileInputRef}
-								className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+								className="file-input"
 							/>
 							<SubmitPhotoButton
 								disabled={!selectedFile || Boolean(fileError)}
 							/>
 						</div>
 						{selectedFile && !fileError && (
-							<p className="mt-1 text-xs text-gray-600">
+							<p className="form-hint form-hint-default">
 								Ausgewählt: {selectedFile.name}
 							</p>
 						)}
 						{fileError && (
-							<p className="mt-1 text-xs text-red-600">{fileError}</p>
+							<p className="form-hint form-error-text">{fileError}</p>
 						)}
 					</div>
 				</div>
 				{displayUploadMessage?.message && (
 					<p
-						className={`mt-2 text-sm ${
+						className={`form-message ${
 							displayUploadMessage.status === 'success'
-								? 'text-green-600'
-								: 'text-red-600'
+								? 'form-message-success'
+								: 'form-message-error'
 						}`}
 					>
 						{displayUploadMessage.message}
@@ -242,13 +239,13 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 				)}
 			</form>
 
-			<form action={updateFormAction} className="space-y-4">
-				<h2 className="text-lg font-medium">Profilinformationen bearbeiten</h2>
+			<form
+				action={updateFormAction}
+				className="profile-form profile-info-form"
+			>
+				<h2 className="form-title">Profilinformationen bearbeiten</h2>
 				<div>
-					<label
-						htmlFor="name"
-						className="block text-sm font-medium text-gray-700"
-					>
+					<label htmlFor="name" className="form-label">
 						Name
 					</label>
 					<input
@@ -257,14 +254,11 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						name="name"
 						placeholder="Ihr Name, max. 20 Zeichen"
 						defaultValue={user.name ?? ''}
-						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+						className="form-input"
 					/>
 				</div>
 				<div>
-					<label
-						htmlFor="birthDate"
-						className="block text-sm font-medium text-gray-700"
-					>
+					<label htmlFor="birthDate" className="form-label">
 						Geburtsdatum
 					</label>
 					<input
@@ -272,21 +266,18 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						id="birthDate"
 						name="birthDate"
 						defaultValue={formatDateForInput(user.birthDate)}
-						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+						className="form-input"
 					/>
 				</div>
 				<div>
-					<label
-						htmlFor="gender"
-						className="block text-sm font-medium text-gray-700"
-					>
+					<label htmlFor="gender" className="form-label">
 						Geschlecht
 					</label>
 					<select
 						id="gender"
 						name="gender"
 						defaultValue={user.gender ?? ''}
-						className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+						className="form-input form-select"
 					>
 						<option value="">Bitte wählen...</option>{' '}
 						<option value="weiblich">Weiblich</option>
@@ -295,10 +286,7 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 					</select>
 				</div>
 				<div>
-					<label
-						htmlFor="city"
-						className="block text-sm font-medium text-gray-700"
-					>
+					<label htmlFor="city" className="form-label">
 						Stadt
 					</label>
 					<input
@@ -307,14 +295,11 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						name="city"
 						placeholder="Ihre Stadt, max. 20 Zeichen"
 						defaultValue={user.city ?? ''}
-						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+						className="form-input"
 					/>
 				</div>
 				<div>
-					<label
-						htmlFor="aboutMe"
-						className="block text-sm font-medium text-gray-700"
-					>
+					<label htmlFor="aboutMe" className="form-label">
 						Über mich
 					</label>
 					<textarea
@@ -323,17 +308,17 @@ export function ProfileForm({ user }: { user: UserProfileData }) {
 						placeholder="Ihr Text, max. 50 Zeichen"
 						rows={4}
 						defaultValue={user.aboutMe ?? ''}
-						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+						className="form-input form-textarea"
 					></textarea>
 				</div>
 				<div>
 					<SubmitProfileButton />
 					{displayUpdateMessage?.message && (
 						<p
-							className={`mt-2 text-sm ${
+							className={`form-message ${
 								displayUpdateMessage.status === 'success'
-									? 'text-green-600'
-									: 'text-red-600'
+									? 'form-message-success'
+									: 'form-message-error'
 							}`}
 						>
 							{displayUpdateMessage.message}
