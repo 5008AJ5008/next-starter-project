@@ -1,6 +1,7 @@
 /* Grundlegende Stile für den Body-Bereich */
 body {
 	background-color: var(--background-color);
+	padding-top: 72.25px;
 }
 
 /* Haupt-Wrapper für die gesamte Seite, stellt sicher, dass der Footer unten bleibt */
@@ -37,6 +38,10 @@ body {
 	display: flex;
 	justify-content: space-around;
 	width: 100%;
+	position: fixed; /* Або position: sticky; */
+	top: 0;
+	left: 0;
+	z-index: 100;
 	/* Titel innerhalb der Kopfzeile */
 	.site-header__title {
 		font-family: var(--font-karla);
